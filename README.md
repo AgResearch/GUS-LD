@@ -1,5 +1,5 @@
 # GUS-LD 
-Genotyping Uncertainty with Sequencing data and Linkage Disequilibrium (GUS-LD).
+Genotyping Uncertainty with Sequencing data - Linkage Disequilibrium (GUS-LD).
 
 R code that implements the method introduced by Bilton et al. (2017) that estimates linkage disequilibrium using low coverage sequencing data that have been generated using high-throughput sequencing multiplexing methods, such as genotyping-by-sequencing, restriction-site association DNA or exome-capture. The novelty of this methodology is its ability to account for genotyping errors resulting from low read depths (e.g., allelic dropout). 
 
