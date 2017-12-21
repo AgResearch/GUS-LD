@@ -41,5 +41,5 @@ Bilton, T.P., McEwan, J.C., Clarke, S.M., Brauning, R., Van Stijn, T.C., Rowe, S
 Dodds, K.G., McEwan, J.C., Brauning, R., Anderson, R.M., Van Stijn, T.C., Kristj&#225;nsson, T., Clarke, S.M. (2015) Construction of relatedness matrices using genotyping-by-sequencing data. BMC Genomics, **16**:1047. doi:[10.1186/s12864-015-2252-3](https://bmcgenomics.biomedcentral.com/articles/10.1186/s12864-015-2252-3)
 
 ### License
-GUS-LD is Copyright 2017 Timothy P. Bilton, released under the GNU General Public License version 3.
+GUS-LD is Copyright 2017 AgResearch Ltd., released under the GNU General Public License version 3.
 
