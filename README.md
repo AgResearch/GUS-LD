@@ -36,7 +36,7 @@ The best way to understand how GUS_LD works is to run through the file [GUS_LD-e
 
 ### References:
 
-Bilton, T.P., McEwan, J.C., Clarke, S.M., Brauning, R., Van Stijn, T.C., Rowe, S.J., Dodds, K.G. (2017). Linkage disequilibrium estimation in low coverage high-throughput sequencing data. [https://doi.org/10.1101/235937]
+Bilton, T.P., McEwan, J.C., Clarke, S.M., Brauning, R., Van Stijn, T.C., Rowe, S.J., Dodds, K.G. (2017). Linkage disequilibrium estimation in low coverage high-throughput sequencing data. doi:[10.1101/235937]
 
 Dodds, K.G., McEwan, J.C., Brauning, R., Anderson, R.M., Van Stijn, T.C., Kristj&#225;nsson, T., Clarke, S.M. (2015) Construction of relatedness matrices using genotyping-by-sequencing data. BMC Genomics, **16**:1047. doi:[10.1186/s12864-015-2252-3](https://bmcgenomics.biomedcentral.com/articles/10.1186/s12864-015-2252-3)
 
