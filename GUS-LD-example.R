@@ -20,14 +20,13 @@
 ### Date: 16/12/17
 
 ## Read in the data
-genon <- as.matrix(read.table("deer_genon.txt",header=T))
-depth <- as.matrix(read.table("deer_depth.txt",header=T))
+load("deer.RData")
 
 ## Source the function for calculating the pairwise LD
 source("GUS-LD.R")
 
 ## Compute the LD matrix
-LD_mat <- GUS_LD(genon, depth, parallel = F)
+LD_mat <- GUS_LD(genon=genon, depth_Ref = depth_Ref, depth_Alt = depth_Alt, parallel = F)
 
 ## Plot the results
 # D'
@@ -38,7 +37,7 @@ image(LD_mat[[2]],col=rev(heat.colors(100)),main=expression("Plot of"~r^2))
 ### Can use parallelization to speed up computation.
 ### Note: Nclust gives tehe number of clusters used in the parallelization
 ###       DO NOT set as being equal to or larger than the number of cores in your computer. 
-LD_mat <- GUS_LD(genon, depth, Nclust = 2, parallel = T)
+LD_mat <- GUS_LD(genon=genon, depth_Ref = depth_Ref, depth_Alt = depth_Alt, Nclust = 3, parallel = T)
 
 ### Can specify an alternative LD measure
 ##  Measures already defined
@@ -52,7 +51,28 @@ LD_r <- function(pA1,pA2,D){
 }
 
 # Compute the correlation coefficient
-LD_mat2 <- GUS_LD(genon, depth, Nclust = 2, parallel = T, LDmeasure = "LD_r")
+LD_mat2 <- GUS_LD(genon=genon, depth_Ref = depth_Ref, depth_Alt = depth_Alt, Nclust = 3, parallel = T, LDmeasure = "LD_r")
 
 image(LD_mat2$LD_r,col=rev(heat.colors(100)),main=expression("Plot of r"))
+
+#### Code for reading in an VCFfile
+source("readVCF.R")
+
+### Arguments for readVCF function:
+##  - genofile: Nmae of VCFfile
+##  - gform: If aligned to reference, use reference. If called using UNEAK, then use 'uneak'.
+##  - sampthres: Minimum sample depth at which samples are to be removed.
+library(RCurl)
+filename = "https://raw.github.com/tpbilton/GUSMap/master/inst/extdata/Manuka_chr11.vcf"
+newData <- readVCF(infilename=getURL(filename), gform="reference")
+
+LD_mat2 <- GUS_LD(genon=newData$genon[,1:30], depth_Ref = newData$depth_Ref[,1:30], depth_Alt = newData$depth_Alt[,1:30],
+                  Nclust = 3, parallel = T)
+
+image(LD_mat2$r2,col=rev(heat.colors(100)),main=expression("Plot of r"))
+
+## if SNPs where called using uneak. Then set gform="uneak"
+
+
+
 
