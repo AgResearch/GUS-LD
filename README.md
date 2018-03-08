@@ -30,7 +30,7 @@ The best way to understand how GUS_LD works is to run through the file [GUS_LD-e
 
 ### References:
 
-Bilton, T.P., McEwan, J.C., Clarke, S.M., Brauning, R., Van Stijn, T.C., Rowe, S.J., Dodds, K.G. (2017). Linkage disequilibrium estimation in low coverage high-throughput sequencing data. Unpublished Manuscript.
+Bilton, T.P., McEwan, J.C., Clarke, S.M., Brauning, R., Van Stijn, T.C., Rowe, S.J., Dodds, K.G. (2017). Linkage disequilibrium estimation in low coverage high-throughput sequencing data. doi:[10.1101/235937](https://doi.org/10.1101/235937)
 
 ### License
 GUS-LD is Copyright (C) 2017 AgResearch Ltd., released under the GNU General Public License version 3.
