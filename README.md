@@ -20,13 +20,14 @@ data <- readVCF("vcffilename.vcf")
 
 ### Files:
 
-- [GUS_LD.R](GUS_LD.R): R script which contains a function for computing all the pairwise LD estimates in the data. Note that parallelization is possible in this function but requires that the [foreach](https://cran.r-project.org/web/packages/foreach/index.html) and [doSNOW](https://cran.r-project.org/web/packages/doSNOW/index.html) R packages are installed.
-- [GUS_LD-example.R](GUS_LD-example.R): R script with some example code using the deer dataset found in Bilton et al. (2017).
+- [GUS-LD.R](GUS_LD.R): R script which contains a function for computing all the pairwise LD estimates in the data. Note that parallelization is possible in this function but requires that the [foreach](https://cran.r-project.org/web/packages/foreach/index.html) and [doSNOW](https://cran.r-project.org/web/packages/doSNOW/index.html) R packages are installed.
+- [GUS-LD-example.R](GUS_LD-example.R): R script with some example code using the deer dataset found in Bilton et al. (2017).
 - [deer.RData](deer.RData): Matrix of genotype calls and allele counts for reference and alternate alleles for the deer dataset used in Bilton et al. (2017).
+- [readVCF.R](readVCF.R): R script with functions for converting a VCF file into the required format for GUS-LD.
 
 ### Example:
 
-The best way to understand how GUS_LD works is to run through the file [GUS_LD-example.R](GUS_LD-example.R).
+The best way to understand how GUS_LD works is to run through the file [GUS_LD-example.R](GUS-LD-example.R).
 
 ### References:
 
