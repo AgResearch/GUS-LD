@@ -173,16 +173,12 @@ GUS_LD <- function(genon,depth_Ref,depth_Alt,Nclust=4,parallel=TRUE,LDmeasure=c(
       stop('Error: Problem with estimation proceedure using parallel computing.')
     } else {  stopCluster(cl) }
     
-    names(LDmat) <- LDmeasure
-    
     for(i in 1:(length(LDmeasure))){
       diag(LDmat[[i]]) <- get(LDmeasure[i])(0.5,0.5,0.25)
       LDmat[[i]][upper.tri(LDmat[[i]])] <- t(LDmat[[i]])[upper.tri(t(LDmat[[i]]))]
     }
     diag(LDmat[[i+1]]) <- NA
     LDmat[[i+1]][upper.tri(LDmat[[i+1]])] <- t(LDmat[[i+1]])[upper.tri(t(LDmat[[i+1]]))]
-    
-    return(LDmat)
   }
   else{
     freq <- colMeans(genon,na.rm=T)/2
@@ -233,9 +229,13 @@ GUS_LD <- function(genon,depth_Ref,depth_Alt,Nclust=4,parallel=TRUE,LDmeasure=c(
       LDmat[[i]][lower.tri(LDmat[[i]])] <- t(LDmat[[i]])[lower.tri(t(LDmat[[i]]))]
     }
     diag(LDmat[[i+1]]) <- NA
-    LDmat[[i+1]][upper.tri(LDmat[[i+1]])] <- t(LDmat[[i+1]])[upper.tri(t(LDmat[[i+1]]))]
-    return(LDmat)    
+    LDmat[[i+1]][lower.tri(LDmat[[i+1]])] <- t(LDmat[[i+1]])[lower.tri(t(LDmat[[i+1]]))]
   }
+  
+  names(LDmat) <- c(LDmeasure,"epsilon")
+  for(i in 1:(length(LDmeasure)+1))
+    colnames(LDmat[[i]]) <- rownames(LDmat[[i]]) <- colnames(genon)
+  return(LDmat) 
 }
 
 

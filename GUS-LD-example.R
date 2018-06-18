@@ -55,6 +55,10 @@ LD_mat2 <- GUS_LD(genon=genon, depth_Ref = depth_Ref, depth_Alt = depth_Alt, Ncl
 
 image(LD_mat2$LD_r,col=rev(heat.colors(100)),main=expression("Plot of r"))
 
+## To extract the error parameters
+image(LD_mat2$epsilon,col=rev(heat.colors(100)),main=expression("Plot of sequencing error"))
+hist(LD_mat2$epsilon)
+
 #### Code for reading in an VCFfile
 source("readVCF.R")
 

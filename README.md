@@ -1,7 +1,7 @@
-# GUS-LD 
+# GUS-LD Version 0.1.1 
 Genotyping Uncertainty with Sequencing data - Linkage Disequilibrium (GUS-LD).
 
-R code that implements the method introduced by Bilton et al. (2017) that estimates linkage disequilibrium using low coverage sequencing data that have been generated using high-throughput sequencing multiplexing methods, such as genotyping-by-sequencing, restriction-site association DNA or exome-capture. The novelty of this methodology is its ability to account for genotyping errors resulting from low read depths (e.g., allelic dropout). 
+R code that implements the method introduced by Bilton et al. (2018) that estimates linkage disequilibrium using low coverage sequencing data that have been generated using high-throughput sequencing multiplexing methods, such as genotyping-by-sequencing, restriction-site association DNA or exome-capture. The novelty of this methodology is its ability to account for genotyping errors resulting from low read depths (e.g., allelic dropout). 
 
 [![gplv3+](https://img.shields.io/badge/license-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl.html)
 
@@ -31,8 +31,8 @@ The best way to understand how GUS_LD works is to run through the file [GUS_LD-e
 
 ### References:
 
-Bilton, T.P., McEwan, J.C., Clarke, S.M., Brauning, R., Van Stijn, T.C., Rowe, S.J., Dodds, K.G. (2017). Linkage disequilibrium estimation in low coverage high-throughput sequencing data. doi:[10.1101/235937](https://doi.org/10.1101/235937)
+Bilton, T.P., McEwan, J.C., Clarke, S.M., Brauning, R., Van Stijn, T.C., Rowe, S.J., Dodds, K.G. (2018). Linkage disequilibrium estimation in low coverage high-throughput sequencing data. *Genetics*, *209*(2), 289-400. doi:[10.1534/genetics.118.300831](https://doi.org/10.1534/genetics.118.300831)
 
 ### License
-GUS-LD is Copyright (C) 2017 AgResearch Ltd., released under the GNU General Public License version 3.
-
+GUS-LD is Copyright (C) 2017-2018 AgResearch Ltd., released under the GNU General Public License version 3.
+ 
