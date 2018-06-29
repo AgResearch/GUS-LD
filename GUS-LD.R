@@ -140,29 +140,40 @@ GUS_LD <- function(genon,depth_Ref,depth_Alt,Nclust=4,parallel=TRUE,LDmeasure=c(
                                        pAB <- choose(depth_Ref2+depth_Alt2,depth_Ref2) * (1/2)^(depth_Ref2 + depth_Alt2)
                                        N <- length(apply(depth_Ref2==0&depth_Alt2==0,1,any))
                                        
-                                       MLE <- optim(logit(c(0.5,freq[ind],0.01)),ll_wrapper,
-                                                    method="Nelder-Mead", control=list(reltol=1e-10, maxit=2000),
-                                                    depth_Ref=depth_Ref2,depth_Alt=depth_Alt2,pAB=pAB)
-                                       MLE2 <- optim(logit(c(0.5,freq[ind],0.0001)),ll_wrapper,
-                                                     method="Nelder-Mead", control=list(reltol=1e-10, maxit=2000),
-                                                     depth_Ref=depth_Ref2,depth_Alt=depth_Alt2,pAB=pAB)
-                                       if(MLE$value < MLE2$value)
-                                         MLE <- MLE$par
-                                       else
-                                         MLE <- MLE2$par
-                                       pA1_hat = inv.logit(MLE[2])
-                                       pA2_hat = inv.logit(MLE[3])
-                                       D_hat <- (2*inv.logit(MLE[1])-1)*sqrt(pA1_hat*pA2_hat*(1-pA1_hat)*(1-pA2_hat))
-                                       D_hat <- D_hat*(2*N/(2*N-1))
-                                       ep_hat = inv.logit(MLE[4])
-                                       ## Check that D is within its range
-                                       C1hat <- max(-(pA1_hat*pA2_hat),-prod(1-c(pA1_hat,pA2_hat))); C2hat <- min((1-pA1_hat)*pA2_hat,pA1_hat*(1-pA2_hat))
-                                       D_hat <- ifelse(D_hat>=0,min(D_hat,C2hat),max(D_hat,C1hat))
                                        
-                                       for(meas in 1:length(LDmeasure)) {
-                                         LDvec[[meas]][snp2] <- get(LDmeasure[[meas]])(pA1=pA1_hat,pA2=pA2_hat,D=D_hat)
+                                       MLE <- try(optim(logit(c(0.5,freq[ind],0.01)),ll_wrapper,
+                                                        method="Nelder-Mead", control=list(reltol=1e-10, maxit=2000),
+                                                        depth_Ref=depth_Ref2,depth_Alt=depth_Alt2,pAB=pAB))
+                                       MLE2 <- try(optim(logit(c(0.5,freq[ind],0.0001)),ll_wrapper,
+                                                         method="Nelder-Mead", control=list(reltol=1e-10, maxit=2000),
+                                                         depth_Ref=depth_Ref2,depth_Alt=depth_Alt2,pAB=pAB))
+                                       ## do some checks
+                                       if(class(MLE)=='try-error' & class(MLE2)=='try-error'){
+                                         for(meas in 1:(length(LDmeasure)+1)) {
+                                           LDvec[[meas]][snp2] <- NA
+                                         }
                                        }
-                                       LDvec[[length(LDmeasure)+1]][snp2] <- ep_hat
+                                       else{
+                                         if(class(MLE)=='try-error')
+                                           MLE <- MLE2$par
+                                         else if(class(MLE2)=='try-error' || (MLE$value < MLE2$value))
+                                           MLE <- MLE$par
+                                         else 
+                                           MLE <- MLE2$par
+                                         pA1_hat = inv.logit(MLE[2])
+                                         pA2_hat = inv.logit(MLE[3])
+                                         D_hat <- (2*inv.logit(MLE[1])-1)*sqrt(pA1_hat*pA2_hat*(1-pA1_hat)*(1-pA2_hat))
+                                         D_hat <- D_hat*(2*N/(2*N-1))
+                                         ep_hat = inv.logit(MLE[4])
+                                         ## Check that D is within its range
+                                         C1hat <- max(-(pA1_hat*pA2_hat),-prod(1-c(pA1_hat,pA2_hat))); C2hat <- min((1-pA1_hat)*pA2_hat,pA1_hat*(1-pA2_hat))
+                                         D_hat <- ifelse(D_hat>=0,min(D_hat,C2hat),max(D_hat,C1hat))
+                                         
+                                         for(meas in 1:length(LDmeasure)) {
+                                           LDvec[[meas]][snp2] <- get(LDmeasure[[meas]])(pA1=pA1_hat,pA2=pA2_hat,D=D_hat)
+                                         }
+                                         LDvec[[length(LDmeasure)+1]][snp2] <- ep_hat
+                                       }
                                      }
                                      return(lapply(LDvec,round,digits=8))
                                    }
@@ -199,29 +210,39 @@ GUS_LD <- function(genon,depth_Ref,depth_Alt,Nclust=4,parallel=TRUE,LDmeasure=c(
         pAB <- choose(depth_Ref2+depth_Alt2,depth_Ref2) * (1/2)^(depth_Ref2 + depth_Alt2)
         N <- length(apply(depth_Ref2==0&depth_Alt2==0,1,any))
         
-        MLE <- optim(logit(c(0.5,freq[ind],0.01)),ll_wrapper,
+        MLE <- try(optim(logit(c(0.5,freq[ind],0.01)),ll_wrapper,
                      method="Nelder-Mead", control=list(reltol=1e-10, maxit=2000),
-                     depth_Ref=depth_Ref2,depth_Alt=depth_Alt2,pAB=pAB)
-        MLE2 <- optim(logit(c(0.5,freq[ind],0.0001)),ll_wrapper,
+                     depth_Ref=depth_Ref2,depth_Alt=depth_Alt2,pAB=pAB))
+        MLE2 <- try(optim(logit(c(0.5,freq[ind],0.0001)),ll_wrapper,
                       method="Nelder-Mead", control=list(reltol=1e-10, maxit=2000),
-                      depth_Ref=depth_Ref2,depth_Alt=depth_Alt2,pAB=pAB)
-        if(MLE$value < MLE2$value)
-          MLE <- MLE$par
-        else
-          MLE <- MLE2$par
-        pA1_hat = inv.logit(MLE[2])
-        pA2_hat = inv.logit(MLE[3])
-        D_hat <- (2*inv.logit(MLE[1])-1)*sqrt(pA1_hat*pA2_hat*(1-pA1_hat)*(1-pA2_hat))
-        D_hat <- D_hat*(2*N/(2*N-1))
-        ep_hat = inv.logit(MLE[4])
-        ## Check that D is within its range
-        C1hat <- max(-(pA1_hat*pA2_hat),-prod(1-c(pA1_hat,pA2_hat))); C2hat <- min((1-pA1_hat)*pA2_hat,pA1_hat*(1-pA2_hat))
-        D_hat <- ifelse(D_hat>=0,min(D_hat,C2hat),max(D_hat,C1hat))
-        
-        for(meas in 1:length(LDmeasure)) {
-          LDmat[[meas]][i,j] <- get(LDmeasure[[meas]])(pA1=pA1_hat,pA2=pA2_hat,D=D_hat)
+                      depth_Ref=depth_Ref2,depth_Alt=depth_Alt2,pAB=pAB))
+        ## do some checks
+        if(class(MLE)=='try-error' & class(MLE2)=='try-error'){
+          for(meas in 1:(length(LDmeasure)+1)) {
+            LDmat[[meas]][i,j] <- NA
+          }
         }
-        LDmat[[length(LDmeasure)+1]][i,j] <- ep_hat
+        else{
+          if(class(MLE)=='try-error')
+            MLE <- MLE2$par
+          else if(class(MLE2)=='try-error' || (MLE$value < MLE2$value))
+            MLE <- MLE$par
+          else 
+            MLE <- MLE2$par
+          pA1_hat = inv.logit(MLE[2])
+          pA2_hat = inv.logit(MLE[3])
+          D_hat <- (2*inv.logit(MLE[1])-1)*sqrt(pA1_hat*pA2_hat*(1-pA1_hat)*(1-pA2_hat))
+          D_hat <- D_hat*(2*N/(2*N-1))
+          ep_hat = inv.logit(MLE[4])
+          ## Check that D is within its range
+          C1hat <- max(-(pA1_hat*pA2_hat),-prod(1-c(pA1_hat,pA2_hat))); C2hat <- min((1-pA1_hat)*pA2_hat,pA1_hat*(1-pA2_hat))
+          D_hat <- ifelse(D_hat>=0,min(D_hat,C2hat),max(D_hat,C1hat))
+          
+          for(meas in 1:length(LDmeasure)) {
+            LDmat[[meas]][i,j] <- get(LDmeasure[[meas]])(pA1=pA1_hat,pA2=pA2_hat,D=D_hat)
+          }
+          LDmat[[length(LDmeasure)+1]][i,j] <- ep_hat
+        }
       }
     }
     for(i in 1:(length(LDmeasure))){
