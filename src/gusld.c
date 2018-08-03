@@ -4,18 +4,18 @@
 #include <Rmath.h>
 #include <math.h>
 
-SEXP ll_gusld_c(SEXP LD, SEXP p, SEXP ep, SEXP AA, SEXP AB, SEXP BB, SEXP nInd){
+SEXP ll_gusld_c(SEXP LD, SEXP p, SEXP AA, SEXP AB, SEXP BB, SEXP nInd){
 
-  int ind, ind2, nInd_c, *pAA, *pAB, *pBB;
-  double sum, LD_c;
+  int ind, ind2, nInd_c;
+  double LD_c, *pAA, *pAB, *pBB;
   nInd_c = INTEGER(nInd)[0];
-  double ep_c[2] = {REAL(ep)[0], REAL(ep)[1]} ;
-  double p_c[2] = {REAL(p)[0], REAL(p)[0]};
+  //double ep_c[2] = {REAL(ep)[0], REAL(ep)[1]};
+  double p_c[2] = {REAL(p)[0], REAL(p)[1]};
   LD_c = REAL(LD)[0];
   // Define the pointers to the other input R variables
-  pAA = INTEGER(AA);
-  pAB = INTEGER(AB);
-  pAB = INTEGER(BB);
+  pAA = REAL(AA);
+  pAB = REAL(AB);
+  pBB = REAL(BB);
 
   // compute the haplotype probabilities for given parameter values
   double h1 = p_c[0]*p_c[1] + LD_c;
@@ -39,7 +39,6 @@ SEXP ll_gusld_c(SEXP LD, SEXP p, SEXP ep, SEXP AA, SEXP AB, SEXP BB, SEXP nInd){
 
   // Compute the likelihood value
   for(ind = 0; ind < nInd_c; ind++){
-    sum = 0;
     ind2 = nInd_c+ind;
     llval += log(pAA[ind]*(pAA[ind2]*p11 + pAB[ind2]*p12 + pBB[ind2]*p13) +
       pAB[ind]*(pAA[ind2]*p21 + pAB[ind2]*p22 + pBB[ind2]*p23) +

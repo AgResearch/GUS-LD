@@ -1,6 +1,5 @@
-/*
 ##########################################################################
-# Genotyping Uncertainty with Sequencing data (GUSbase)
+# Genotyping Uncertainty with Sequencing data - Linkage Disequilibrium (GUSLD)
 # Copyright 2017-2018 Timothy P. Bilton <tbilton@maths.otago.ac.nz>
 #
 # This program is free software: you can redistribute it and/or modify
@@ -16,23 +15,23 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #########################################################################
- */
+#
+#' Genotyping Uncertainty with Sequencing data - Linkage Disequilibrium
+#'
+#' \tabular{ll}{ Package: \tab GUSLD\cr Type: \tab Package\cr Version: \tab
+#' 1.0.0\cr Date: \tab 2018-07-15\cr License: \tab GPL 3\cr }
+#'
+#' @name GUSLD-package
+#' @aliases GUSLD
+#' @docType package
+#' @author Timothy P. Bilton, Maintainer: Timothy P. Bilton
+#' <tbilton@@maths.otago.ac.nz>
+#' @references
+#' \insertAllCited{}
+#' @keywords package
+#' @importFrom Rdpack reprompt
+#' @importFrom R6 R6Class
+NULL
 
-#include "GUSLD.h"
-#include <Rinternals.h>
-#include <R_ext/Rdynload.h>
 
 
-static const R_CallMethodDef callMethods[] = {
-  {"ll_gusld_c",               (DL_FUNC) &ll_gusld_c,               6},
-  {NULL,		                   NULL,	                              0}
-};
-
-void R_init_GUSMap(DllInfo *info){
-
-  R_registerRoutines(info,NULL,callMethods,NULL,NULL);
-
-  R_useDynamicSymbols(info, TRUE);
-
-  R_RegisterCCallable("GUSLD","ll_gusld_c",                     (DL_FUNC) &ll_gusld_c);
-}

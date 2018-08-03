@@ -26,6 +26,6 @@
 #define _GUSLD
 
 
-SEXP ll_gusld_c(SEXP LD, SEXP p, SEXP ep, SEXP AA, SEXP AB, SEXP BB, SEXP nInd);
+SEXP ll_gusld_c(SEXP LD, SEXP p, SEXP AA, SEXP AB, SEXP BB, SEXP nInd);
 
 #endif

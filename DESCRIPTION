@@ -1,9 +1,12 @@
 Package: GUSLD
-Title: What the Package Does (one line, title case)
-Version: 0.0.0.9000
-Authors@R: person("First", "Last", email = "first.last@example.com", role = c("aut", "cre"))
-Description: What the package does (one paragraph).
-Depends: R (>= 3.5.0)
-License: What license is it under?
+Title: Genotyping Uncertainty with Sequencing data - Linkage Disequilibrium
+Date: 2018-07-15
+Version: 1.0.0
+Authors@R: person("Timothy P.", "Bilton", email = "tbilton@maths.otago.ac.nz", role = c("aut", "cre"))
+Description: Estimation of linkage disequilibrium using high-throughput sequencing data.
+Depends: R (>= 3.1.0), GUSbase
+Imports: Rdpack (>= 0.8-0)
+License: GPL-3
 Encoding: UTF-8
 LazyData: true
+RoxygenNote: 6.0.1
