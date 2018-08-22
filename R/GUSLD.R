@@ -7,7 +7,8 @@
 #'
 #'
 
-GUSLD <- function(R6obj, SNPsets=NULL, SNPpairs=NULL, nClust=3, LDmeasure=c("r2"), output="matrix", file="LDresults"){
+GUSLD <- function(R6obj, SNPsets=NULL, SNPpairs=NULL, nClust=3, LDmeasure="r2",
+                  output="matrix", file="LDresults"){
 
   ## do some checks
   if(!all(class(R6obj) %in% c("UR","RA","R6")))
@@ -81,15 +82,20 @@ GUSLD <- function(R6obj, SNPsets=NULL, SNPpairs=NULL, nClust=3, LDmeasure=c("r2"
         for(meas in 1:length(res)){
           diag(res[[meas]]) <- 0
           res[[meas]][upper.tri(res[[meas]])] <- t(res[[meas]])[upper.tri(res[[meas]])]
-          rownames(res[[meas]]) <- R6obj$.__enclos_env__$private$SNP_Names[snps]
-          colnames(res[[meas]]) <- R6obj$.__enclos_env__$private$SNP_Names[snps]
+          #rownames(res[[meas]]) <- R6obj$.__enclos_env__$private$SNP_Names[snps]
+          #colnames(res[[meas]]) <- R6obj$.__enclos_env__$private$SNP_Names[snps]
         }
         res[[length(res)+1]] <- R6obj$.__enclos_env__$private$pfreq[snps]
         res[[length(res)+1]] <- R6obj$.__enclos_env__$private$ep[snps]
-        names(res) <- c(LDmeasure,"p","ep")
-        return(res)
+        res[[length(res)+1]] <- R6obj$.__enclos_env__$private$SNP_Names[snps]
+        res[[length(res)+1]] <- R6obj$.__enclos_env__$private$SNP_Names[snps]
+        names(res) <- c(LDmeasure,"p","ep","SNP Names (rows)","SNP Names (columns)")
+        if(!is.null(file))
+          stop("to be implemented")
+        else
+          return(res)
       }
-      ## Block matric for estimation between two independent pair of SNPs
+      ## Block matrix for estimation between two independent pair of SNPs
       else if(is.list(SNPsets) && length(SNPsets) == 2 &&
               is.vector(SNPsets[[1]]) && round(SNPsets[[1]]) == SNPsets[[1]] &&
               is.vector(SNPsets[[2]]) && round(SNPsets[[2]]) == SNPsets[[2]]){
