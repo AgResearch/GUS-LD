@@ -1,4 +1,42 @@
-#' @export GUSLD
+##########################################################################
+# Genotyping Uncertainty with Sequencing data - Linkage Disequilibrium (GUSLD)
+# Copyright 2017-2018 AgResearch Ltd. <timothy.bilton@agresearch.co.nz>
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#########################################################################
+
+#' Compute pairwise LD estimates using GUSLD
+#'
+#' Function computes the LD estimates for high-throughput sequencing data using the methodology
+#' by \insertCite{bilton2018genetics2;textual}{GUSbase}.
+#'
+#' @param URobj An object of class UR created by the \code{\link{makeUR}} function.
+#' @param SNPpairs Matrix of specifying the pairs of SNPs in which to calculate pairwise LD.
+#' @param indset Vector of integer indices corresponding to individuals to be used in the LD calculations.
+#' Used to specify a subset of individuals of the data for which LD is calculated.
+#' @param nClust Integer number specifying the number of cores to use in the paralellization.
+#' @param LDmeasure Character vector specifying which LD measures to calculate. Predefined
+#' measures are \code{\link{Dcoef}}, \code{\link{Dprime}} and \code{\link{r2}} (see details below).
+#' One can also specify their own LD measure (see examples).
+#' @param file Character string giving the name of the file to write the LD results to. If NULL,
+#' the function returns the LD results instead of writing them to a file.
+#' @param dp Integer number specifying the number of decimal places to round the LD results.
+#' Note: only works when \code{file} is not NULL.
+#' @author Timothy P. Bilton
+#' @export
+#' @references
+#' \insertRef{bilton2018genetics2}{GUSbase}
 #' @examples
 #' ## Define LD measure as the correlation coefficient
 #' LD_r <- function(pA1,pA2,D){
@@ -8,7 +46,7 @@
 #'
 
 GUSLD <- function(URobj, SNPpairs=NULL, indset=NULL, nClust=3, LDmeasure="r2",
-                  file=NULL){
+                  file=NULL, dp=4){
 
   ## do some checks
   if(!all(class(URobj) %in% c("UR","RA","R6")))
@@ -53,7 +91,8 @@ GUSLD <- function(URobj, SNPpairs=NULL, indset=NULL, nClust=3, LDmeasure="r2",
     registerDoSNOW(cl)
     nSnps <- length(snps)
     ## estimate the pairwise LD
-    res <- foreach(snp1=iter(1:nSnps),.combine=GUSbase:::comb_mat,.multicombine=TRUE) %dopar% {
+    res <- foreach(snp1=iter(1:nSnps),.combine=GUSbase:::comb_mat, .export=LDmeasure,
+                   .multicombine=TRUE) %dopar% {
       LDvec <- c(replicate(length(LDmeasure),numeric(nSnps),simplify=F))
       for(snp2 in seq_len(snp1-1)){
         ind <- snps[c(snp1,snp2)]
@@ -62,7 +101,7 @@ GUSLD <- function(URobj, SNPpairs=NULL, indset=NULL, nClust=3, LDmeasure="r2",
         pA2_hat = temp[2]
         C1hat = max(-prod(c(pA1_hat,pA2_hat)),-prod(1-c(pA1_hat,pA2_hat)))
         C2hat = min((1-pA1_hat)*pA2_hat,pA1_hat*(1-pA2_hat))
-        MLE <- try(optim(par = 0, fn = ll_gusld, method="Brent",
+        MLE <- try(optimize(f = ll_gusld, tol=1e-7,
                          lower=C1hat, upper=C2hat, p=c(pA1_hat,pA2_hat),
                          ep=URobj$.__enclos_env__$private$ep[ind],
                          ref=URobj$.__enclos_env__$private$ref[indset,ind],
@@ -70,9 +109,9 @@ GUSLD <- function(URobj, SNPpairs=NULL, indset=NULL, nClust=3, LDmeasure="r2",
                          nInd=nind))
         ## check that the estimation process worked
         if(class(MLE)=="try-error")
-          MLE = NA
+          D_hat = NA
         else
-          D_hat = MLE$par
+          D_hat = MLE$minimum
         ## generate the estimates
         depth <- URobj$.__enclos_env__$private$ref[indset,ind] + URobj$.__enclos_env__$private$alt[indset,ind]
         N <- sum(apply(depth, 1, function(x) all(!is.na(x))))
@@ -91,13 +130,13 @@ GUSLD <- function(URobj, SNPpairs=NULL, indset=NULL, nClust=3, LDmeasure="r2",
       out <- as.data.frame(matrix(nrow=nrow(indx), ncol=length(LDmeasure)+8))
       #out[,1:2] <- indx
       for(meas in 1:length(LDmeasure))
-        out[meas] <- round(res[[meas]][indx],4)
+        out[meas] <- format(round(res[[meas]][indx],dp),scientific = FALSE,drop0trailing = TRUE)
       out[length(LDmeasure)+1:4] <-
         c(URobj$.__enclos_env__$private$chrom[snps][indx],
           URobj$.__enclos_env__$private$pos[snps][indx])
       out[length(LDmeasure)+5:8] <- format(c(
-          round(URobj$.__enclos_env__$private$pfreq[snps][indx],4),
-          format(round(URobj$.__enclos_env__$private$ep[snps][indx],4))),scientific = FALSE,drop0trailing = TRUE)
+          round(URobj$.__enclos_env__$private$pfreq[snps][indx],dp),
+          round(URobj$.__enclos_env__$private$ep[snps][indx],dp)))
       colnames(out) <- c(LDmeasure, "CHROM_SNP1","CHROM_SNP2","POS_SNP1","POS_SNP2",
                          "FREQ_SNP1","FREQ_SNP2","ERR_SNP1","ERR_SNP2")
       data.table::fwrite(out, file = file, quote=FALSE, nThread = nClust)
@@ -128,7 +167,7 @@ GUSLD <- function(URobj, SNPpairs=NULL, indset=NULL, nClust=3, LDmeasure="r2",
     cl <- makeCluster(nClust)
     registerDoSNOW(cl)
     ## compute the LD for specified SNP pairs
-    res <- foreach(pair=iter(1:npairs), .combine="rbind") %dopar% {
+    res <- foreach(pair=iter(1:npairs), .combine="rbind", .export=LDmeasure) %dopar% {
       LDvec <- rep(NA,length(LDmeasure))
       ind <- SNPpairs[pair,]
       temp <- URobj$.__enclos_env__$private$pfreq[ind]
@@ -136,7 +175,7 @@ GUSLD <- function(URobj, SNPpairs=NULL, indset=NULL, nClust=3, LDmeasure="r2",
       pA2_hat = temp[2]
       C1hat = max(-prod(c(pA1_hat,pA2_hat)),-prod(1-c(pA1_hat,pA2_hat)))
       C2hat = min((1-pA1_hat)*pA2_hat,pA1_hat*(1-pA2_hat))
-      MLE <- try(optim(par = 0, fn = ll_gusld, method="Brent",
+      MLE <- try(optimize(f = ll_gusld, tol=1e-6,
                          lower=C1hat, upper=C2hat, p=c(pA1_hat,pA2_hat),
                          ep=URobj$.__enclos_env__$private$ep[ind],
                          ref=URobj$.__enclos_env__$private$ref[indset,ind],
@@ -144,7 +183,7 @@ GUSLD <- function(URobj, SNPpairs=NULL, indset=NULL, nClust=3, LDmeasure="r2",
                          nInd=nind))
       ## check that the estimation process worked
       if(class(MLE)!="try-error"){
-        D_hat = MLE$par
+        D_hat = MLE$minimum
         ## generate the estimates
         depth <- URobj$.__enclos_env__$private$ref[indset,ind] + URobj$.__enclos_env__$private$alt[indset,ind]
         N <- sum(apply(depth, 1, function(x) all(!is.na(x))))
@@ -158,12 +197,12 @@ GUSLD <- function(URobj, SNPpairs=NULL, indset=NULL, nClust=3, LDmeasure="r2",
     }
     stopCluster(cl)
     out <- as.data.frame(matrix(nrow=npairs, ncol=length(LDmeasure) + 8))
-    out[1:length(LDmeasure)] <- round(res,4)
+    out[1:length(LDmeasure)] <- format(round(res,dp), scientific = FALSE,drop0trailing = TRUE)
     out[length(LDmeasure) + 1:4] <- c(URobj$.__enclos_env__$private$chrom[SNPpairs],
                                       URobj$.__enclos_env__$private$pos[SNPpairs])
     out[length(LDmeasure) + 5:8] <- format(c(
-      round(URobj$.__enclos_env__$private$pfreq[SNPpairs],4),
-      round(URobj$.__enclos_env__$private$ep[SNPpairs],4)
+      round(URobj$.__enclos_env__$private$pfreq[SNPpairs],dp),
+      round(URobj$.__enclos_env__$private$ep[SNPpairs],dp)
     ),scientific = FALSE,drop0trailing = TRUE)
     names(out) <- c(LDmeasure, "CHROM_SNP1","CHROM_SNP2","POS_SNP1","POS_SNP2",
                     "FREQ_SNP1","FREQ_SNP2","ERR_SNP1","ERR_SNP2")

@@ -1,6 +1,6 @@
 ##########################################################################
 # Genotyping Uncertainty with Sequencing data - Linkage Disequilibrium (GUSLD)
-# Copyright 2017-2018 Timothy P. Bilton <tbilton@maths.otago.ac.nz>
+# Copyright 2017-2018 AgResearch Ltd. <timothy.bilton@agresearch.co.nz>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,7 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #########################################################################
 #
-#' Genotyping Uncertainty with Sequencing data - Linkage Disequilibrium
+#' Genotyping Uncertainty with Sequencing data - Linkage Disequilibrium (GUSLD)
 #'
 #' \tabular{ll}{ Package: \tab GUSLD\cr Type: \tab Package\cr Version: \tab
 #' 1.0.0\cr Date: \tab 2018-07-15\cr License: \tab GPL 3\cr }
@@ -25,9 +25,9 @@
 #' @aliases GUSLD
 #' @docType package
 #' @author Timothy P. Bilton, Maintainer: Timothy P. Bilton
-#' <tbilton@@maths.otago.ac.nz>
+#' <timothy.bilton@agresearch.co.nz>
 #' @references
-#' \insertAllCited{}
+#' \insertRef{bilton2018genetics2}{GUSbase}
 #' @keywords package
 #' @importFrom Rdpack reprompt
 #' @importFrom R6 R6Class

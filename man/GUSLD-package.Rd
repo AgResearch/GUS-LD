@@ -4,16 +4,16 @@
 \name{GUSLD-package}
 \alias{GUSLD-package}
 \alias{GUSLD}
-\title{Genotyping Uncertainty with Sequencing data - Linkage Disequilibrium}
+\title{Genotyping Uncertainty with Sequencing data - Linkage Disequilibrium (GUSLD)}
 \description{
 \tabular{ll}{ Package: \tab GUSLD\cr Type: \tab Package\cr Version: \tab
 1.0.0\cr Date: \tab 2018-07-15\cr License: \tab GPL 3\cr }
 }
 \references{
-\insertAllCited{}
+\insertRef{bilton2018genetics2}{GUSbase}
 }
 \author{
 Timothy P. Bilton, Maintainer: Timothy P. Bilton
-<tbilton@maths.otago.ac.nz>
+<timothy.bilton@agresearch.co.nz>
 }
 \keyword{package}
