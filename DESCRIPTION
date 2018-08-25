@@ -5,7 +5,8 @@ Version: 1.0.0
 Authors@R: person("Timothy P.", "Bilton", email = "tbilton@maths.otago.ac.nz", role = c("aut", "cre"))
 Description: Estimation of linkage disequilibrium using high-throughput sequencing data.
 Depends: R (>= 3.1.0), GUSbase
-Imports: Rdpack (>= 0.8-0)
+Imports: Rdpack (>= 0.8-0), data.table
+RdMacros: Rdpack
 License: GPL-3
 Encoding: UTF-8
 LazyData: true
