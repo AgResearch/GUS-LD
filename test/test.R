@@ -7,9 +7,9 @@ deer <- makeUR(radata, ploid = 2, filter = list(MAF=0.01, MISS=0.9))
 
 ## test out GUSLD
 
-LDmat <- GUSLD(deer,nClust = 3, file="test",sf=4)
+LDmat <- GUSLD(deer,nClust = 3, file="test")
 LDmat <- GUSLD(deer,SNPpairs = matrix(c(1:5,2:6), ncol=2),
-               nClust = 3, file="test_sub", sf=6, LDmeasure = c("r2","LD_r"))
+               nClust = 3, file="test_sub", LDmeasure = c("r2","Dprime"))
 
 
 ## Simulation
@@ -100,6 +100,8 @@ depths <- c(1:5,7.5,10,15)
 for(D in c(0,0.05,0.1,0.25)){
   for(meanDepth in depths){
 
+    set.seed(meanDepth*39)
+
     pB1 <- 1-pA1
     pB2 <- 1-pA2
 
@@ -157,23 +159,24 @@ for(D in c(0,0.05,0.1,0.25)){
 
 
 ## plot the results
-D=c(0,0.05,0.15,0.25)
+D=c(0,0.05,0.1,0.25)
 
-Est.mat <- Depths <- trueVar <- replicate(n = length(D), numeric(length(depths)), simplify=F)
+Est.mat <- replicate(n = 3, matrix(nrow=length(depths),ncol=length(D)), simplify=F)
 
 for(i in 1:length(D)){
-  for(j in 2:length(depths)){
-    temp <- read.table(paste0('test/GBS_quick_pA1_',pA1,'_pA2_',pA2,'_D',D[i],'_N',nInd,'_nSnps',nSnps,"_depth",depths[j],'.txt_GUSLD.txt'),header=T,sep=",", stringsAsFactors = F)
-    Est.mat[[i]][j] <- c(colMeans(temp[,1:3]))
-    Depths[[i]] <- scan(paste0('SimData/GBS_depth_pA1_',pA1,'_pA2_',pA2,'_D',D[i],'_N',n,'Runs',Nruns,'.txt'))
-    trueVar[[i]] <- scan(paste0('SimData/GBS_trueVar_pA1_',pA1,'_pA2_',pA2,'_D',D[i],'_N',n,'Runs',Nruns,'.txt'))
-    ## remove depth 20
-    Est.mat[[i]] <- Est.mat[[i]][-9,]
-    Depths[[i]] <- Depths[[i]][-9]
+  for(j in 1:length(depths)){
+    temp <- as.matrix(read.table(paste0('test/GBS_quick_pA1_',pA1,'_pA2_',pA2,'_D',D[i],'_N',nInd,'_nSnps',nSnps,"_depth",depths[j],'.txt_GUSLD.txt',sep=''),header=T,sep=",", stringsAsFactors = F))
+    for(m in 1:3)
+      Est.mat[[m]][j,i] <- (mean(temp[,m])-D[i]^2/(0.5^4))
   }
 }
 
-
+met = 3
+plot(Est.mat[[met]][,1]~depths, ylim=c(min(Est.mat[[met]]), max(Est.mat[[met]])))
+abline(h=0, lty=3)
+points(Est.mat[[met]][,2]~depths, col=2)
+points(Est.mat[[met]][,3]~depths, col=3)
+points(Est.mat[[met]][,4]~depths, col=4)
 
 
 

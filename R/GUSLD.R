@@ -45,7 +45,7 @@
 #'
 #'
 
-GUSLD <- function(URobj, SNPpairs=NULL, indset=NULL, nClust=3, LDmeasure="r2",
+GUSLD <- function(URobj, SNPpairs=NULL, indset=NULL, nClust=2, LDmeasure="r2",
                   file=NULL, dp=4){
 
   ## do some checks
@@ -87,11 +87,11 @@ GUSLD <- function(URobj, SNPpairs=NULL, indset=NULL, nClust=3, LDmeasure="r2",
   if(is.null(SNPpairs)){
     snps <- 1:URobj$.__enclos_env__$private$nSnps
     ## Set up the clusters
-    cl <- makeCluster(nClust)
-    registerDoSNOW(cl)
+    cl <- parallel::makeCluster(nClust)
+    doParallel::registerDoParallel(cl)
     nSnps <- length(snps)
     ## estimate the pairwise LD
-    res <- foreach(snp1=iter(1:nSnps),.combine=GUSbase:::comb_mat, .export=LDmeasure,
+    res <- foreach::foreach(snp1=1:nSnps,.combine=GUSbase:::comb_mat, .export=LDmeasure,
                    .multicombine=TRUE) %dopar% {
       LDvec <- c(replicate(length(LDmeasure),numeric(nSnps),simplify=F))
       for(snp2 in seq_len(snp1-1)){
@@ -101,7 +101,7 @@ GUSLD <- function(URobj, SNPpairs=NULL, indset=NULL, nClust=3, LDmeasure="r2",
         pA2_hat = temp[2]
         C1hat = max(-prod(c(pA1_hat,pA2_hat)),-prod(1-c(pA1_hat,pA2_hat)))
         C2hat = min((1-pA1_hat)*pA2_hat,pA1_hat*(1-pA2_hat))
-        MLE <- try(optimize(f = ll_gusld, tol=1e-7,
+        MLE <- try(stats::optimize(f = ll_gusld, tol=1e-7,
                          lower=C1hat, upper=C2hat, p=c(pA1_hat,pA2_hat),
                          ep=URobj$.__enclos_env__$private$ep[ind],
                          ref=URobj$.__enclos_env__$private$ref[indset,ind],
@@ -123,7 +123,7 @@ GUSLD <- function(URobj, SNPpairs=NULL, indset=NULL, nClust=3, LDmeasure="r2",
       }
       return(LDvec)
     }
-    stopCluster(cl)
+    parallel::stopCluster(cl)
     ## format result to write to file
     if(writeFile){
       indx <- which(upper.tri(res[[1]]), arr.ind=T)
@@ -164,10 +164,10 @@ GUSLD <- function(URobj, SNPpairs=NULL, indset=NULL, nClust=3, LDmeasure="r2",
     ## Work out the number of pairs
     npairs <- nrow(SNPpairs)
     ## Set up the clusters
-    cl <- makeCluster(nClust)
-    registerDoSNOW(cl)
+    cl <- parallel::makeCluster(nClust)
+    doParallel::registerDoParallel(cl)
     ## compute the LD for specified SNP pairs
-    res <- foreach(pair=iter(1:npairs), .combine="rbind", .export=LDmeasure) %dopar% {
+    res <- foreach::foreach(pair=1:npairs, .combine="rbind", .export=LDmeasure) %dopar% {
       LDvec <- rep(NA,length(LDmeasure))
       ind <- SNPpairs[pair,]
       temp <- URobj$.__enclos_env__$private$pfreq[ind]
@@ -175,7 +175,7 @@ GUSLD <- function(URobj, SNPpairs=NULL, indset=NULL, nClust=3, LDmeasure="r2",
       pA2_hat = temp[2]
       C1hat = max(-prod(c(pA1_hat,pA2_hat)),-prod(1-c(pA1_hat,pA2_hat)))
       C2hat = min((1-pA1_hat)*pA2_hat,pA1_hat*(1-pA2_hat))
-      MLE <- try(optimize(f = ll_gusld, tol=1e-6,
+      MLE <- try(stats::optimize(f = ll_gusld, tol=1e-6,
                          lower=C1hat, upper=C2hat, p=c(pA1_hat,pA2_hat),
                          ep=URobj$.__enclos_env__$private$ep[ind],
                          ref=URobj$.__enclos_env__$private$ref[indset,ind],
@@ -195,7 +195,7 @@ GUSLD <- function(URobj, SNPpairs=NULL, indset=NULL, nClust=3, LDmeasure="r2",
       }
       return(LDvec)
     }
-    stopCluster(cl)
+    parallel::stopCluster(cl)
     out <- as.data.frame(matrix(nrow=npairs, ncol=length(LDmeasure) + 8))
     out[1:length(LDmeasure)] <- format(round(res,dp), scientific = FALSE,drop0trailing = TRUE)
     out[length(LDmeasure) + 1:4] <- c(URobj$.__enclos_env__$private$chrom[SNPpairs],

@@ -19,7 +19,7 @@
 #' Genotyping Uncertainty with Sequencing data - Linkage Disequilibrium (GUSLD)
 #'
 #' \tabular{ll}{ Package: \tab GUSLD\cr Type: \tab Package\cr Version: \tab
-#' 1.0.0\cr Date: \tab 2018-07-15\cr License: \tab GPL 3\cr }
+#' 1.0.0\cr Date: \tab 2018-10-22\cr License: \tab GPL 3\cr }
 #'
 #' @name GUSLD-package
 #' @aliases GUSLD
@@ -31,6 +31,7 @@
 #' @keywords package
 #' @importFrom Rdpack reprompt
 #' @importFrom R6 R6Class
+#' @importFrom foreach %dopar%
 NULL
 
 

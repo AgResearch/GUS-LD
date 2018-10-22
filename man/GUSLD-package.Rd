@@ -7,7 +7,7 @@
 \title{Genotyping Uncertainty with Sequencing data - Linkage Disequilibrium (GUSLD)}
 \description{
 \tabular{ll}{ Package: \tab GUSLD\cr Type: \tab Package\cr Version: \tab
-1.0.0\cr Date: \tab 2018-07-15\cr License: \tab GPL 3\cr }
+1.0.0\cr Date: \tab 2018-10-22\cr License: \tab GPL 3\cr }
 }
 \references{
 \insertRef{bilton2018genetics2}{GUSbase}

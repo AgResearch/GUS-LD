@@ -5,7 +5,7 @@
 \title{Compute pairwise LD estimates using GUSLD}
 \usage{
 GUSLD(URobj, SNPpairs = NULL, indset = NULL, nClust = 3,
-  LDmeasure = "r2", file = NULL, sf = 4)
+  LDmeasure = "r2", file = NULL, dp = 4)
 }
 \arguments{
 \item{URobj}{An object of class UR created by the \code{\link{makeUR}} function.}
