@@ -21,32 +21,61 @@
 #' Function computes the LD estimates for high-throughput sequencing data using the methodology
 #' by \insertCite{bilton2018genetics2;textual}{GUSbase}.
 #'
+#' If
+#'
 #' @param URobj An object of class UR created by the \code{\link{makeUR}} function.
-#' @param SNPpairs Matrix of specifying the pairs of SNPs in which to calculate pairwise LD.
-#' @param indset Vector of integer indices corresponding to individuals to be used in the LD calculations.
+#' @param SNPpairs Matrix specifying the pairs of SNPs in which to calculate pairwise LD. See below for details.
+#' @param indsubset Vector of integer indices corresponding to individuals to be used in the LD calculations.
 #' Used to specify a subset of individuals of the data for which LD is calculated.
 #' @param nClust Integer number specifying the number of cores to use in the paralellization.
 #' @param LDmeasure Character vector specifying which LD measures to calculate. Predefined
 #' measures are \code{\link{Dcoef}}, \code{\link{Dprime}} and \code{\link{r2}} (see details below).
 #' One can also specify their own LD measure (see examples).
-#' @param file Character string giving the name of the file to write the LD results to. If NULL,
+#' @param filename Character string giving the name of the file to write the LD results to. If NULL,
 #' the function returns the LD results instead of writing them to a file.
 #' @param dp Integer number specifying the number of decimal places to round the LD results.
 #' Note: only works when \code{file} is not NULL.
 #' @author Timothy P. Bilton
-#' @export
 #' @references
 #' \insertRef{bilton2018genetics2}{GUSbase}
 #' @examples
+#'
+#' ## Read in the deer data that accompanies the package
+#' deerfile <- deerData()
+#' rafile <- VCFtoRA(deerfile)
+#' deer <- readRA(rafile)
+#'
+#' ## Create unrelated population
+#' ur <- makeUR(deer)
+#'
+#' ###### LD estimation #######
+#' ## Estimate all the pairwise LD
+#' LDres <- GUSLD(ur)
+#'
+#' ## write results to file
+#' GUSLD(ur, file=)
+#'
+#' ## Specifying SNP pairs explicitly
+#' # block vs block
+#' pairs <- expand.grid(1:10,11:20)
+#' LDres <- GUSLD(ur, SNPpairs=pairs)
+#'
+#' # Five SNPs before and after
+#' temp <- rep(1:37,rep(5,37))
+#' pairs <- cbind(temp, temp + 1:5)
+#' pairs[-which(pairs[,2] > 38),]
+#' LDres <- GUSLD(ur, SNPpairs=pairs)
+#'
+#' ##### Non-standard LD measure: #######
 #' ## Define LD measure as the correlation coefficient
 #' LD_r <- function(pA1,pA2,D){
 #' return( D/sqrt((prod(c(pA1,pA2,1-c(pA1,pA2))))) )
 #' }
+#' LDres <- GUSLD(ur, LDmeasure=LD_r)
 #'
-#'
-
-GUSLD <- function(URobj, SNPpairs=NULL, indset=NULL, nClust=2, LDmeasure="r2",
-                  file=NULL, dp=4){
+#' @export
+GUSLD <- function(URobj, SNPpairs=NULL, indsubset=NULL, nClust=2, LDmeasure="r2",
+                  filename=NULL, dp=4){
 
   ## do some checks
   if(!all(class(URobj) %in% c("UR","RA","R6")))
@@ -61,21 +90,21 @@ GUSLD <- function(URobj, SNPpairs=NULL, indset=NULL, nClust=2, LDmeasure="r2",
         stop(paste("LD measure",measure,"is not defined"))
     }
   }
-  if(is.null(indset))
-    indset <- 1:URobj$.__enclos_env__$private$nInd
-  else if(!(is.vector(indset) && is.numeric(indset) && all(round(indset) == indset) &&
-            min(indset) > 0 && max(indset) < (URobj$.__enclos_env__$private$nInd+1))){
+  if(is.null(indsubset))
+    indsubset <- 1:URobj$.__enclos_env__$private$nInd
+  else if(!(is.vector(indsubset) && is.numeric(indsubset) && all(round(indsubset) == indsubset) &&
+            min(indsubset) > 0 && max(indsubset) < (URobj$.__enclos_env__$private$nInd+1))){
     stop(paste0("Argument for individuals is not a integer vector between 1 and the number fo individuals",
                 URobj$.__enclos_env__$private$nInd))
-  } else indset <- unique(indset)
-  nind <- length(indset)
-  ## Check if we write to file
+  } else indsubset <- unique(indsubset)
+  nind <- length(indsubset)
+  ## Check if we write to filename
   writeFile = FALSE
-  if(!is.null(file)){
-    if(!is.vector(file) || !is.character(file) || length(file) != 1)
+  if(!is.null(filename)){
+    if(!is.vector(filename) || !is.character(filename) || length(filename) != 1)
       stop("Specified file name is invalid")
     else {
-      file <- paste0("./",file,"_GUSLD.txt")
+      filename <- paste0("./",filename,"_GUSLD.txt")
       writeFile = TRUE
       #if(file.access(file) == 0)
       #  writeFile = TRUE
@@ -104,8 +133,8 @@ GUSLD <- function(URobj, SNPpairs=NULL, indset=NULL, nClust=2, LDmeasure="r2",
         MLE <- try(stats::optimize(f = ll_gusld, tol=1e-7,
                          lower=C1hat, upper=C2hat, p=c(pA1_hat,pA2_hat),
                          ep=URobj$.__enclos_env__$private$ep[ind],
-                         ref=URobj$.__enclos_env__$private$ref[indset,ind],
-                         alt=URobj$.__enclos_env__$private$alt[indset,ind],
+                         ref=URobj$.__enclos_env__$private$ref[indsubset,ind],
+                         alt=URobj$.__enclos_env__$private$alt[indsubset,ind],
                          nInd=nind))
         ## check that the estimation process worked
         if(class(MLE)=="try-error")
@@ -113,7 +142,7 @@ GUSLD <- function(URobj, SNPpairs=NULL, indset=NULL, nClust=2, LDmeasure="r2",
         else
           D_hat = MLE$minimum
         ## generate the estimates
-        depth <- URobj$.__enclos_env__$private$ref[indset,ind] + URobj$.__enclos_env__$private$alt[indset,ind]
+        depth <- URobj$.__enclos_env__$private$ref[indsubset,ind] + URobj$.__enclos_env__$private$alt[indsubset,ind]
         N <- sum(apply(depth, 1, function(x) all(!is.na(x))))
         D_hat <- D_hat*(2*N/(2*N-1))
         D_hat <- ifelse(D_hat>=0,min(D_hat,C2hat),max(D_hat,C1hat))
@@ -139,7 +168,7 @@ GUSLD <- function(URobj, SNPpairs=NULL, indset=NULL, nClust=2, LDmeasure="r2",
           round(URobj$.__enclos_env__$private$ep[snps][indx],dp)))
       colnames(out) <- c(LDmeasure, "CHROM_SNP1","CHROM_SNP2","POS_SNP1","POS_SNP2",
                          "FREQ_SNP1","FREQ_SNP2","ERR_SNP1","ERR_SNP2")
-      data.table::fwrite(out, file = file, quote=FALSE, nThread = nClust)
+      data.table::fwrite(out, filename = filename, quote=FALSE, nThread = nClust)
     } else{
       for(meas in 1:length(res)){
         diag(res[[meas]]) <- get(LDmeasure[meas])(pA1=0.5,pA2=0.5,D=0.25)
@@ -178,14 +207,14 @@ GUSLD <- function(URobj, SNPpairs=NULL, indset=NULL, nClust=2, LDmeasure="r2",
       MLE <- try(stats::optimize(f = ll_gusld, tol=1e-6,
                          lower=C1hat, upper=C2hat, p=c(pA1_hat,pA2_hat),
                          ep=URobj$.__enclos_env__$private$ep[ind],
-                         ref=URobj$.__enclos_env__$private$ref[indset,ind],
-                         alt=URobj$.__enclos_env__$private$alt[indset,ind],
+                         ref=URobj$.__enclos_env__$private$ref[indsubset,ind],
+                         alt=URobj$.__enclos_env__$private$alt[indsubset,ind],
                          nInd=nind))
       ## check that the estimation process worked
       if(class(MLE)!="try-error"){
         D_hat = MLE$minimum
         ## generate the estimates
-        depth <- URobj$.__enclos_env__$private$ref[indset,ind] + URobj$.__enclos_env__$private$alt[indset,ind]
+        depth <- URobj$.__enclos_env__$private$ref[indsubset,ind] + URobj$.__enclos_env__$private$alt[indsubset,ind]
         N <- sum(apply(depth, 1, function(x) all(!is.na(x))))
         D_hat <- D_hat*(2*N/(2*N-1))
         D_hat <- ifelse(D_hat>=0,min(D_hat,C2hat),max(D_hat,C1hat))
@@ -208,7 +237,7 @@ GUSLD <- function(URobj, SNPpairs=NULL, indset=NULL, nClust=2, LDmeasure="r2",
                     "FREQ_SNP1","FREQ_SNP2","ERR_SNP1","ERR_SNP2")
     ## return the results
     if(writeFile)
-      data.table::fwrite(out,file = file, quote = FALSE, nThread = nClust)
+      data.table::fwrite(out,file = filename, quote = FALSE, nThread = nClust)
     else
       return(out)
   }

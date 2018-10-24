@@ -39,7 +39,7 @@
 #' @param pA2 Allele frequency for the second SNP
 #' @param D Disequilibrium coefficient
 #'
-#' @return An numeric value giving the value of the LD measure
+#' @return A numeric value giving the value of the LD measure
 #' @name LDmeasure
 #' @author Timothy P. Bilton
 #' @references
