@@ -21,7 +21,7 @@ r2(pA1, pA2, D)
 \item{D}{Disequilibrium coefficient}
 }
 \value{
-An numeric value giving the value of the LD measure
+A numeric value giving the value of the LD measure
 }
 \description{
 Functions for computing LD measures for predefined (or estimated) allele frequency values and

@@ -21,7 +21,14 @@
 #' Function computes the LD estimates for high-throughput sequencing data using the methodology
 #' by \insertCite{bilton2018genetics2;textual}{GUSbase}.
 #'
-#' If
+#' Argument \code{SNPpairs} must be an integer matrix with two columns, where the first column specify the
+#' indices of the SNPs and the rows correspond to each SNP pair for which LD is to be computed.
+#' If \code{SNPpairs=NULL}, then LD is estimated for all the SNP paris in the
+#' dataset.
+#'
+#' To reduce computation time, the calculations are performed in parallel using the \code{\link[foreach]{foreach}}
+#' function. The \code{nClust} argument specifies the number of cores to use in the parallelization. Note: do not
+#' set this argument to more than the number of cores available (or bad things can happen!).
 #'
 #' @param URobj An object of class UR created by the \code{\link{makeUR}} function.
 #' @param SNPpairs Matrix specifying the pairs of SNPs in which to calculate pairwise LD. See below for details.
@@ -35,6 +42,49 @@
 #' the function returns the LD results instead of writing them to a file.
 #' @param dp Integer number specifying the number of decimal places to round the LD results.
 #' Note: only works when \code{file} is not NULL.
+#'
+#' @return
+#' If \code{filename=NULL} and \code{SNPpairs=NULL}, then a list containing the following elements is returned:
+#' \itemize{
+#' \item [\emph{LDmeasure}]: Symmetric matrix of LD estimates for LD measure [\emph{LDmeasure}]. Note: if multiple LD measures have been specified,
+#' then there will be a element for each LD measure
+#' \item p: Vector of allele frequency estimates for each SNP. The ith element of this vector corresponds to the SNP in the ith
+#' row (or column) of the LD matrix.
+#' \item ep: Vector of sequencing error estimates for each SNP. The ith element of this vector corresponds to the SNP in the ith
+#' row (or column) of the LD matrix.
+#' \item SNP_Names: Vector of SNP names in the format [\emph{CHROM_POS}]. The ith element of this vector corresponds to the SNP in the ith
+#' row (or column) of the LD matrix.
+#' }
+#'
+#' If \code{filename=NULL} and \code{SNPpairs} is specified, then a matrix is returned with the following columns:
+#' \itemize{
+#' \item [\emph{LDmeasure}]: The LD estmate for the measure [\emph{LDmeasure}]. Note: if multiple LD measures have been specified,
+#' then there will be a column for each LD measure
+#' \item CHROM_SNP1: The chromosome number of the first SNP
+#' \item CHROM_SNP2: The chromosome number of the second SNP
+#' \item POS_SNP1: The position (in base pairs) of the first SNP on the chromosome
+#' \item POS_SNP2: The position (in base pairs) of the second SNP on the chromosome
+#' \item FREQ_SNP1: The allele frequency estimate of the first SNP (as used in the calculation of the LD measure)
+#' \item FREQ_SNP2: The allele frequency estimate of the second SNP (as used in the calculation of the LD measure)
+#' \item ERR_SNP1: The sequencing error estimate of the first SNP (as used in the calculation of the LD measure)
+#' \item ERR_SNP2: The sequencing error estimate of the second SNP (as used in the calculation of the LD measure)
+#' }
+#'
+#' If \code{filename} is specified and corresponds to a vaild name, then the results are written
+#' to a file called \emph{filename_GUSMap.txt} which contains the following columns:
+#' \itemize{
+#' \item [\emph{LDmeasure}]: The LD estmate for the measure [\emph{LDmeasure}]. Note: if multiple LD measures have been specified,
+#' then there will be a column for each LD measure
+#' \item CHROM_SNP1: The chromosome number of the first SNP
+#' \item CHROM_SNP2: The chromosome number of the second SNP
+#' \item POS_SNP1: The position (in base pairs) of the first SNP on the chromosome
+#' \item POS_SNP2: The position (in base pairs) of the second SNP on the chromosome
+#' \item FREQ_SNP1: The allele frequency estimate of the first SNP (as used in the calculation of the LD measure)
+#' \item FREQ_SNP2: The allele frequency estimate of the second SNP (as used in the calculation of the LD measure)
+#' \item ERR_SNP1: The sequencing error estimate of the first SNP (as used in the calculation of the LD measure)
+#' \item ERR_SNP2: The sequencing error estimate of the second SNP (as used in the calculation of the LD measure)
+#' }
+#'
 #' @author Timothy P. Bilton
 #' @references
 #' \insertRef{bilton2018genetics2}{GUSbase}
@@ -53,17 +103,17 @@
 #' LDres <- GUSLD(ur)
 #'
 #' ## write results to file
-#' GUSLD(ur, file=)
+#' GUSLD(ur, file="results")
 #'
 #' ## Specifying SNP pairs explicitly
 #' # block vs block
-#' pairs <- expand.grid(1:10,11:20)
+#' pairs <- as.matrix(expand.grid(1:10,11:20))
 #' LDres <- GUSLD(ur, SNPpairs=pairs)
 #'
 #' # Five SNPs before and after
 #' temp <- rep(1:37,rep(5,37))
 #' pairs <- cbind(temp, temp + 1:5)
-#' pairs[-which(pairs[,2] > 38),]
+#' pairs <- pairs[-which(pairs[,2] > 38),]
 #' LDres <- GUSLD(ur, SNPpairs=pairs)
 #'
 #' ##### Non-standard LD measure: #######
@@ -71,7 +121,7 @@
 #' LD_r <- function(pA1,pA2,D){
 #' return( D/sqrt((prod(c(pA1,pA2,1-c(pA1,pA2))))) )
 #' }
-#' LDres <- GUSLD(ur, LDmeasure=LD_r)
+#' LDres <- GUSLD(ur, LDmeasure="LD_r")
 #'
 #' @export
 GUSLD <- function(URobj, SNPpairs=NULL, indsubset=NULL, nClust=2, LDmeasure="r2",
@@ -168,7 +218,7 @@ GUSLD <- function(URobj, SNPpairs=NULL, indsubset=NULL, nClust=2, LDmeasure="r2"
           round(URobj$.__enclos_env__$private$ep[snps][indx],dp)))
       colnames(out) <- c(LDmeasure, "CHROM_SNP1","CHROM_SNP2","POS_SNP1","POS_SNP2",
                          "FREQ_SNP1","FREQ_SNP2","ERR_SNP1","ERR_SNP2")
-      data.table::fwrite(out, filename = filename, quote=FALSE, nThread = nClust)
+      data.table::fwrite(out, file = filename, quote=FALSE, nThread = nClust)
     } else{
       for(meas in 1:length(res)){
         diag(res[[meas]]) <- get(LDmeasure[meas])(pA1=0.5,pA2=0.5,D=0.25)
@@ -179,8 +229,7 @@ GUSLD <- function(URobj, SNPpairs=NULL, indsubset=NULL, nClust=2, LDmeasure="r2"
       res[[length(res)+1]] <- URobj$.__enclos_env__$private$pfreq[snps]
       res[[length(res)+1]] <- URobj$.__enclos_env__$private$ep[snps]
       res[[length(res)+1]] <- URobj$.__enclos_env__$private$SNP_Names[snps]
-      res[[length(res)+1]] <- URobj$.__enclos_env__$private$SNP_Names[snps]
-      names(res) <- c(LDmeasure,"p","ep","SNP Names (rows)","SNP Names (columns)")
+      names(res) <- c(LDmeasure,"p","ep","SNP_Names")
       return(res)
     }
   } else{ ## Case 2: SNP pairs specified
@@ -225,6 +274,7 @@ GUSLD <- function(URobj, SNPpairs=NULL, indsubset=NULL, nClust=2, LDmeasure="r2"
       return(LDvec)
     }
     parallel::stopCluster(cl)
+    res <- unname(res)
     out <- as.data.frame(matrix(nrow=npairs, ncol=length(LDmeasure) + 8))
     out[1:length(LDmeasure)] <- format(round(res,dp), scientific = FALSE,drop0trailing = TRUE)
     out[length(LDmeasure) + 1:4] <- c(URobj$.__enclos_env__$private$chrom[SNPpairs],
@@ -242,221 +292,3 @@ GUSLD <- function(URobj, SNPpairs=NULL, indsubset=NULL, nClust=2, LDmeasure="r2"
       return(out)
   }
 }
-
-
-#   if(!is.null(file)){
-#       if(is.null(SNPpairs) && (is.null(SNPsets) || (is.list(SNPsets) && length(SNPsets) == 1))
-#       ## Symmetric matrix for all pairs
-#       if(is.null(SNPsets) || (is.list(SNPsets) && length(SNPsets) == 1 &&
-#                               is.vector(SNPsets[[1]]) && round(SNPsets[[1]]) == SNPsets[[1]])){
-#         if(!is.null(SNPsets)){
-#           snps <- sort(SNPsets[[1]])
-#           if(any(snps) < 1 || any(snps) > URobj$.__enclos_env__$private$nSnps || any(duplicated(snps)))
-#             stop("SNPset vector is invalid")
-#         }
-#         else
-#           snps <- 1:URobj$.__enclos_env__$private$nSnps
-#
-#         ## Set up the clusters
-#         cl <- makeCluster(nClust)
-#         registerDoSNOW(cl)
-#         nSnps <- length(snps)
-#         ## estimate the pairwise LD
-#         res <- foreach(snp1=iter(1:nSnps),.combine=GUSbase:::comb_mat,.multicombine=TRUE) %dopar% {
-#           LDvec <- c(replicate(length(LDmeasure),numeric(nSnps),simplify=F))
-#           for(snp2 in seq_len(snp1-1)){
-#             ind <- snps[c(snp1,snp2)]
-#             temp <- URobj$.__enclos_env__$private$pfreq[ind]
-#             pA1_hat = temp[1]
-#             pA2_hat = temp[2]
-#             C1hat = max(-prod(c(pA1_hat,pA2_hat)),-prod(1-c(pA1_hat,pA2_hat)))
-#             C2hat = min((1-pA1_hat)*pA2_hat,pA1_hat*(1-pA2_hat))
-#             MLE <- try(optim(par = 0, fn = ll_gusld, method="Brent",
-#                              lower=C1hat, upper=C2hat, p=c(pA1_hat,pA2_hat),
-#                              ep=URobj$.__enclos_env__$private$ep[ind],
-#                              ref=URobj$.__enclos_env__$private$ref[,ind],
-#                              alt=URobj$.__enclos_env__$private$alt[,ind],
-#                              nInd=URobj$.__enclos_env__$private$nInd))
-#             ## check that the estimation process worked
-#             if(class(MLE)=="try-error")
-#               MLE = NA
-#             else
-#               D_hat = MLE$par
-#             ## generate the estimates
-#             depth <- URobj$.__enclos_env__$private$ref[,ind] + URobj$.__enclos_env__$private$alt[,ind]
-#             N <- sum(apply(depth, 1, function(x) all(!is.na(x))))
-#             D_hat <- D_hat*(2*N/(2*N-1))
-#             D_hat <- ifelse(D_hat>=0,min(D_hat,C2hat),max(D_hat,C1hat))
-#             for(meas in 1:length(LDmeasure)) {
-#               LDvec[[meas]][snp2] <- get(LDmeasure[[meas]])(pA1=pA1_hat,pA2=pA2_hat,D=D_hat)
-#             }
-#           }
-#           return(LDvec)
-#         }
-#         stopCluster(cl)
-#         for(meas in 1:length(res)){
-#           diag(res[[meas]]) <- 0
-#           res[[meas]][upper.tri(res[[meas]])] <- t(res[[meas]])[upper.tri(res[[meas]])]
-#           #rownames(res[[meas]]) <- URobj$.__enclos_env__$private$SNP_Names[snps]
-#           #colnames(res[[meas]]) <- URobj$.__enclos_env__$private$SNP_Names[snps]
-#         }
-#         res[[length(res)+1]] <- URobj$.__enclos_env__$private$pfreq[snps]
-#         res[[length(res)+1]] <- URobj$.__enclos_env__$private$ep[snps]
-#         res[[length(res)+1]] <- URobj$.__enclos_env__$private$SNP_Names[snps]
-#         res[[length(res)+1]] <- URobj$.__enclos_env__$private$SNP_Names[snps]
-#         names(res) <- c(LDmeasure,"p","ep","SNP Names (rows)","SNP Names (columns)")
-#         if(!is.null(file))
-#           stop("to be implemented")
-#         else
-#           return(res)
-#       }
-#       ## Block matrix for estimation between two independent pair of SNPs
-#       else if(is.list(SNPsets) && length(SNPsets) == 2 &&
-#               is.vector(SNPsets[[1]]) && round(SNPsets[[1]]) == SNPsets[[1]] &&
-#               is.vector(SNPsets[[2]]) && round(SNPsets[[2]]) == SNPsets[[2]]){
-#         snps1 <- sort(SNPsets[[1]])
-#         snps2 <- sort(SNPsets[[2]])
-#         if(any(snps1) < 1 || any(snps1) > URobj$.__enclos_env__$private$nSnps || any(duplicated(snps1)))
-#           stop("SNPset vector is invalid")
-#         if(any(snps2) < 1 || any(snps2) > URobj$.__enclos_env__$private$nSnps || any(duplicated(snps2)))
-#           stop("SNPset vector is invalid")
-#         ## Set up the clusters
-#         cl <- makeCluster(nClust)
-#         registerDoSNOW(cl)
-#         ## estimate the pairwise LD
-#         res <- foreach(snp1=iter(snps1),.combine=GUSbase:::comb_mat,.multicombine=TRUE) %dopar% {
-#           LDvec <- c(replicate(length(LDmeasure),numeric(length(snps2)),simplify=F))
-#           for(snp2 in snps2){
-#             ind <- c(snp1,snp2)
-#             temp <- URobj$.__enclos_env__$private$pfreq[ind]
-#             pA1_hat = temp[1]
-#             pA2_hat = temp[2]
-#             C1hat = max(-prod(c(pA1_hat,pA2_hat)),-prod(1-c(pA1_hat,pA2_hat)))
-#             C2hat = min((1-pA1_hat)*pA2_hat,pA1_hat*(1-pA2_hat))
-#             MLE <- try(optim(par = 0, fn = ll_gusld, method="Brent",
-#                              lower=C1hat, upper=C2hat, p=c(pA1_hat,pA2_hat),
-#                              ep=URobj$.__enclos_env__$private$ep[ind],
-#                              ref=URobj$.__enclos_env__$private$ref[,ind],
-#                              alt=URobj$.__enclos_env__$private$alt[,ind],
-#                              nInd=URobj$.__enclos_env__$private$nInd))
-#             ## check that the estimation process worked
-#             if(class(MLE)=="try-error")
-#               MLE = NA
-#             else
-#               D_hat = MLE$par
-#             ## generate the estimates
-#             depth <- URobj$.__enclos_env__$private$ref[,ind] + URobj$.__enclos_env__$private$alt[,ind]
-#             N <- sum(apply(depth, 1, function(x) all(!is.na(x))))
-#             D_hat <- D_hat*(2*N/(2*N-1))
-#             D_hat <- ifelse(D_hat>=0,min(D_hat,C2hat),max(D_hat,C1hat))
-#             for(meas in 1:length(LDmeasure)) {
-#               LDvec[[meas]][which(snp2==snps2)] <- get(LDmeasure[[meas]])(pA1=pA1_hat,pA2=pA2_hat,D=D_hat)
-#             }
-#           }
-#           return(LDvec)
-#         }
-#         stopCluster(cl)
-#         ## add the SNP names to the matrix
-#         for(meas in 1:length(res)){
-#           rownames(res[[meas]]) <- URobj$.__enclos_env__$private$SNP_Names[snps1]
-#           colnames(res[[meas]]) <- URobj$.__enclos_env__$private$SNP_Names[snps2]
-#         }
-#         res[[length(res)+1]] <- list(Rows=URobj$.__enclos_env__$private$pfreq[snps1],
-#                                       Columns=URobj$.__enclos_env__$private$pfreq[snps2])
-#         res[[length(res)+1]] <- list(Rows=URobj$.__enclos_env__$private$ep[snps1],
-#                                       Columns=URobj$.__enclos_env__$private$ep[snps2])
-#         names(res) <- c(LDmeasure,"p","ep")
-#         return(res)
-#       }
-#       else
-#         stop("Invalid input for 'SNPsets' argument. Should be a list of length 2.")
-#     }
-#   }
-#   ## write the results to a file
-#   else if(output=="file"){
-#     ## check file doesn't exist
-#     if(output == "file"){
-#       file = file.path(file,".txt")
-#       if(file.exists(file))
-#         stop("Output file already exists. Please specify a different file name")
-#     }
-#     if(is.null(SNPpairs)){
-#       ## symmetic matrix between all paris of SNPs
-#       if(is.null(SNPsets) || is.list(SNPsets) && length(SNPsets) == 1 &&
-#          is.vector(SNPsets[[1]]) && round(SNPsets[[1]]) == SNPsets[[1]]){
-#         if(is.null(SNPsets))
-#           snps <- 1:URobj$.__enclos_env__$private$nSnps
-#         else{
-#           snps <- sort(SNPsets[[1]])
-#           if(any(snps) < 1 || any(snps) > URobj$.__enclos_env__$private$nSnps || any(duplicated(snps)))
-#             stop("SNPset vector is invalid")
-#         }
-#         # Every pairwise calculation
-#         ## Set up the clusters
-#         cl <- makeCluster(nClust)
-#         registerDoSNOW(cl)
-#         nSnps <- length(snps)
-#         ## estimate the pairwise LD
-#         res <- foreach(snp1=iter(1:nSnps),.combine=GUSbase:::comb_vec,.multicombine=TRUE) %dopar% {
-#           LDvec <- c(replicate(length(LDmeasure)+1,numeric(length(seq_len(snp1-1))),simplify=F))
-#           for(snp2 in seq_len(snp1-1)){
-#             ind <- c(snp1,snp2)
-#             temp <- URobj$.__enclos_env__$private$pfreq[ind]
-#             pA1_hat = temp[1]
-#             pA2_hat = temp[2]
-#             C1hat = max(-prod(c(pA1_hat,pA2_hat)),-prod(1-c(pA1_hat,pA2_hat)))
-#             C2hat = min((1-pA1_hat)*pA2_hat,pA1_hat*(1-pA2_hat))
-#             MLE <- try(optim(par = 0, fn = ll_gusld, method="Brent",
-#                              lower=C1hat, upper=C2hat, p=c(pA1_hat,pA2_hat),
-#                              ep=URobj$.__enclos_env__$private$ep[ind],
-#                              ref=URobj$.__enclos_env__$private$ref[,ind],
-#                              alt=URobj$.__enclos_env__$private$alt[,ind],
-#                              nInd=URobj$.__enclos_env__$private$nInd))
-#             ## check that the estimation process worked
-#             if(class(MLE)=="try-error")
-#               MLE = NA
-#             else
-#               D_hat = MLE$par
-#             ## generate the estimates
-#             depth <- URobj$.__enclos_env__$private$ref[,ind] + URobj$.__enclos_env__$private$alt[,ind]
-#             N <- sum(apply(depth, 1, function(x) all(!is.na(x))))
-#             D_hat <- D_hat*(2*N/(2*N-1))
-#             D_hat <- ifelse(D_hat>=0,min(D_hat,C2hat),max(D_hat,C1hat))
-#             for(meas in 1:length(LDmeasure)) {
-#               LDvec[[meas]][snp2] <- get(LDmeasure[[meas]])(pA1=pA1_hat,pA2=pA2_hat,D=D_hat)
-#             }
-#             LDvec[[meas+1]][snp2] <- c(URobj$.__enclos_env__$private$SNP_Names[ind[1]], pA1_hat, URobj$.__enclos_env__$private$ep[ind[1]],
-#                                        URobj$.__enclos_env__$private$SNP_Names[ind[1]], pA2_hat, URobj$.__enclos_env__$private$ep[ind[2]])
-#
-#           }
-#           return(LDvec)
-#         }
-#         stopCluster(cl)
-#         return(do.call("cbind",res))
-#       }
-#       # Estimation between independent SNP sets
-#       if(is.list(SNPsets) && length(SNPsets) == 2 && is.vector(SNPsets[[1]]) &&
-#         round(SNPsets[[1]]) == SNPsets[[1]] && is.vector(SNPsets[[2]]) &&
-#         round(SNPsets[[2]]) == SNPsets[[2]] && all(SNPsets[[1]] != SNPsets[[2]])){
-#       }
-#       else
-#         stop("Invalid input for the 'SNPsets' argument. Should be a list of length 2")
-#     }
-#     ## Estimation for specified set of SNP pairs
-#     else if(!is.null(SNPpairs) && is.null(SNPsets)){
-#       if(is.matrix(SNPpairs) && is.numeric(SNPpairs) && all(round(SNPpairs)==SNPpairs) && nrow(SNPpairs) == 2){
-#         pos_temp1 <- URobj$.__enclos_env__$private$SNP_Names[SNPpairs[,1]]
-#         pos_temp2 <- URobj$.__enclos_env__$private$SNP_Names[SNPpairs[,2]]
-#         SNPpairs <- cbind(SNPpairs,pos_temp1,pos_temp2)
-#         rm(pos_temp1)
-#         rm(pos_temp2)
-#       }
-#       else
-#         stop("Invalid input for argument 'SNPpairs'. Should be an integer matrix with two columns")
-#     }
-#     else
-#       stop("Something weird has happened. Should not get to this point.")
-#   }
-#   else
-#     stop("Something weird has happened. Should not get to this point.")
-# }
