@@ -11,3 +11,6 @@ URL: https://github.com/AgResearch/GUS-LD
 License: GPL-3 | file LICENSE
 LazyData: true
 RoxygenNote: 6.1.0
+Suggests: knitr,
+    rmarkdown
+VignetteBuilder: knitr
