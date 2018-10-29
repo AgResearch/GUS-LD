@@ -2,8 +2,6 @@
 % Please edit documentation in R/GUSLD-package.R
 \docType{package}
 \name{GUSLD-package}
-\alias{GUSLD-package}
-\alias{GUSLD}
 \title{Genotyping Uncertainty with Sequencing data - Linkage Disequilibrium (GUSLD)}
 \description{
 \tabular{ll}{ Package: \tab GUSLD\cr Type: \tab Package\cr Version: \tab

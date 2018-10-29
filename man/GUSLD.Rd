@@ -79,7 +79,7 @@ indices of the SNPs and the rows correspond to each SNP pair for which LD is to 
 If \code{SNPpairs=NULL}, then LD is estimated for all the SNP paris in the
 dataset.
 
-To reduce computation time, the calcuates are performed in parallel using the \code{\link[foreach]{foreach}}
+To reduce computation time, the calculations are performed in parallel using the \code{\link[foreach]{foreach}}
 function. The \code{nClust} argument specifies the number of cores to use in the parallelization. Note: do not
 set this argument to more than the number of cores available (or bad things can happen!).
 }

@@ -44,19 +44,7 @@
 #' Note: only works when \code{file} is not NULL.
 #'
 #' @return
-#' If \code{filename=NULL} and \code{SNPpairs=NULL}, then a list containing the following elements is returned:
-#' \itemize{
-#' \item [\emph{LDmeasure}]: Symmetric matrix of LD estimates for LD measure [\emph{LDmeasure}]. Note: if multiple LD measures have been specified,
-#' then there will be a element for each LD measure
-#' \item p: Vector of allele frequency estimates for each SNP. The ith element of this vector corresponds to the SNP in the ith
-#' row (or column) of the LD matrix.
-#' \item ep: Vector of sequencing error estimates for each SNP. The ith element of this vector corresponds to the SNP in the ith
-#' row (or column) of the LD matrix.
-#' \item SNP_Names: Vector of SNP names in the format [\emph{CHROM_POS}]. The ith element of this vector corresponds to the SNP in the ith
-#' row (or column) of the LD matrix.
-#' }
-#'
-#' If \code{filename=NULL} and \code{SNPpairs} is specified, then a matrix is returned with the following columns:
+#' A matrix object with named columns is returned where the columns are:
 #' \itemize{
 #' \item [\emph{LDmeasure}]: The LD estmate for the measure [\emph{LDmeasure}]. Note: if multiple LD measures have been specified,
 #' then there will be a column for each LD measure
@@ -69,22 +57,8 @@
 #' \item ERR_SNP1: The sequencing error estimate of the first SNP (as used in the calculation of the LD measure)
 #' \item ERR_SNP2: The sequencing error estimate of the second SNP (as used in the calculation of the LD measure)
 #' }
-#'
-#' If \code{filename} is specified and corresponds to a vaild name, then the results are written
-#' to a file called \emph{filename_GUSMap.txt} which contains the following columns:
-#' \itemize{
-#' \item [\emph{LDmeasure}]: The LD estmate for the measure [\emph{LDmeasure}]. Note: if multiple LD measures have been specified,
-#' then there will be a column for each LD measure
-#' \item CHROM_SNP1: The chromosome number of the first SNP
-#' \item CHROM_SNP2: The chromosome number of the second SNP
-#' \item POS_SNP1: The position (in base pairs) of the first SNP on the chromosome
-#' \item POS_SNP2: The position (in base pairs) of the second SNP on the chromosome
-#' \item FREQ_SNP1: The allele frequency estimate of the first SNP (as used in the calculation of the LD measure)
-#' \item FREQ_SNP2: The allele frequency estimate of the second SNP (as used in the calculation of the LD measure)
-#' \item ERR_SNP1: The sequencing error estimate of the first SNP (as used in the calculation of the LD measure)
-#' \item ERR_SNP2: The sequencing error estimate of the second SNP (as used in the calculation of the LD measure)
-#' }
-#'
+#' If \code{filename=NULL} then the matrix object is returned to the R workspace, otherwise if \code{filename} is specified
+#' and corresponds to a vaild name, then the matrix object is written to a file called \emph{filename_GUSMap.txt}.
 #' @author Timothy P. Bilton
 #' @references
 #' \insertRef{bilton2018genetics2}{GUSbase}
@@ -101,6 +75,7 @@
 #' ###### LD estimation #######
 #' ## Estimate all the pairwise LD
 #' LDres <- GUSLD(ur)
+#' head(LDres)
 #'
 #' ## write results to file
 #' GUSLD(ur, file="results")
@@ -109,12 +84,14 @@
 #' # block vs block
 #' pairs <- as.matrix(expand.grid(1:10,11:20))
 #' LDres <- GUSLD(ur, SNPpairs=pairs)
+#' head(LDres)
 #'
 #' # Five SNPs before and after
 #' temp <- rep(1:37,rep(5,37))
 #' pairs <- cbind(temp, temp + 1:5)
 #' pairs <- pairs[-which(pairs[,2] > 38),]
 #' LDres <- GUSLD(ur, SNPpairs=pairs)
+#' head(LDres)
 #'
 #' ##### Non-standard LD measure: #######
 #' ## Define LD measure as the correlation coefficient
@@ -122,6 +99,7 @@
 #' return( D/sqrt((prod(c(pA1,pA2,1-c(pA1,pA2))))) )
 #' }
 #' LDres <- GUSLD(ur, LDmeasure="LD_r")
+#' head(LDres)
 #'
 #' @export
 GUSLD <- function(URobj, SNPpairs=NULL, indsubset=NULL, nClust=2, LDmeasure="r2",
@@ -154,8 +132,9 @@ GUSLD <- function(URobj, SNPpairs=NULL, indsubset=NULL, nClust=2, LDmeasure="r2"
     if(!is.vector(filename) || !is.character(filename) || length(filename) != 1)
       stop("Specified file name is invalid")
     else {
-      filename <- paste0("./",filename,"_GUSLD.txt")
+      outfilename <- paste0(tail(strsplit(filename,split=.Platform$file.sep)[[1]],1),"_GUSLD.txt")
       writeFile = TRUE
+      outpath <- GUSbase::dts(normalizePath("./", winslash=.Platform$file.sep, mustWork=T))
       #if(file.access(file) == 0)
       #  writeFile = TRUE
       #else
@@ -204,7 +183,7 @@ GUSLD <- function(URobj, SNPpairs=NULL, indsubset=NULL, nClust=2, LDmeasure="r2"
     }
     parallel::stopCluster(cl)
     ## format result to write to file
-    if(writeFile){
+    # if(writeFile){
       indx <- which(upper.tri(res[[1]]), arr.ind=T)
       out <- as.data.frame(matrix(nrow=nrow(indx), ncol=length(LDmeasure)+8))
       #out[,1:2] <- indx
@@ -218,19 +197,23 @@ GUSLD <- function(URobj, SNPpairs=NULL, indsubset=NULL, nClust=2, LDmeasure="r2"
           round(URobj$.__enclos_env__$private$ep[snps][indx],dp)))
       colnames(out) <- c(LDmeasure, "CHROM_SNP1","CHROM_SNP2","POS_SNP1","POS_SNP2",
                          "FREQ_SNP1","FREQ_SNP2","ERR_SNP1","ERR_SNP2")
-      data.table::fwrite(out, file = filename, quote=FALSE, nThread = nClust)
-    } else{
-      for(meas in 1:length(res)){
-        diag(res[[meas]]) <- get(LDmeasure[meas])(pA1=0.5,pA2=0.5,D=0.25)
-        res[[meas]][lower.tri(res[[meas]])] <- t(res[[meas]])[lower.tri(res[[meas]])]
-        #rownames(res[[meas]]) <- URobj$.__enclos_env__$private$SNP_Names[snps]
-        #colnames(res[[meas]]) <- URobj$.__enclos_env__$private$SNP_Names[snps]
-      }
-      res[[length(res)+1]] <- URobj$.__enclos_env__$private$pfreq[snps]
-      res[[length(res)+1]] <- URobj$.__enclos_env__$private$ep[snps]
-      res[[length(res)+1]] <- URobj$.__enclos_env__$private$SNP_Names[snps]
-      names(res) <- c(LDmeasure,"p","ep","SNP_Names")
-      return(res)
+      if(writeFile){
+        data.table::fwrite(out, file = outfilename, quote=FALSE, nThread = nClust)
+        cat("Name of LD results file:    \t",outfilename,"\n")
+        cat("Location of LD results file:\t",outpath,"/\n\n", sep = "")
+      } else{
+    # } else{
+    #   for(meas in 1:length(res)){
+    #     diag(res[[meas]]) <- get(LDmeasure[meas])(pA1=0.5,pA2=0.5,D=0.25)
+    #     res[[meas]][lower.tri(res[[meas]])] <- t(res[[meas]])[lower.tri(res[[meas]])]
+    #     #rownames(res[[meas]]) <- URobj$.__enclos_env__$private$SNP_Names[snps]
+    #     #colnames(res[[meas]]) <- URobj$.__enclos_env__$private$SNP_Names[snps]
+    #   }
+    #   res[[length(res)+1]] <- URobj$.__enclos_env__$private$pfreq[snps]
+    #   res[[length(res)+1]] <- URobj$.__enclos_env__$private$ep[snps]
+    #   res[[length(res)+1]] <- URobj$.__enclos_env__$private$SNP_Names[snps]
+    #   names(res) <- c(LDmeasure,"p","ep","SNP_Names")
+      return(out)
     }
   } else{ ## Case 2: SNP pairs specified
     ## check input for SNPpairs matrix
@@ -287,7 +270,7 @@ GUSLD <- function(URobj, SNPpairs=NULL, indsubset=NULL, nClust=2, LDmeasure="r2"
                     "FREQ_SNP1","FREQ_SNP2","ERR_SNP1","ERR_SNP2")
     ## return the results
     if(writeFile)
-      data.table::fwrite(out,file = filename, quote = FALSE, nThread = nClust)
+      data.table::fwrite(out,file = outfilename, quote = FALSE, nThread = nClust)
     else
       return(out)
   }
