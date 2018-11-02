@@ -222,6 +222,10 @@ GUSLD <- function(URobj, SNPpairs=NULL, indsubset=NULL, nClust=2, LDmeasure="r2"
       stop("Input for SNPpairs is invalid. Should a integer matix with 2 columns.")
     # check for duplicates
     SNPpairs <- unique(SNPpairs, MARGIN=1)
+    ## remove pairs where the SNP is the same
+    removeSNPs <- which(SNPpairs[,1] == SNPpairs[,2])
+    if(length(removeSNPs) > 1)
+      SNPpairs <- SNPpairs[-removeSNPs,]
     ## Work out the number of pairs
     npairs <- nrow(SNPpairs)
     ## Set up the clusters

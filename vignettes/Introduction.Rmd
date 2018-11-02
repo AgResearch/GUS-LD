@@ -11,16 +11,20 @@ bibliography: "../inst/REFERENCES.bib"
 biblio-style: "apalike"
 ---
 
+```{css echo=FALSE}
+.courier-font {font-family: Courier New, Courier, monospace;}
+```
+
 
 ```{r setup, include = FALSE}
-knitr::opts_chunk$set( collapse = TRUE, comment = "#>", eval=TRUE)
+knitr::opts_chunk$set( collapse = TRUE, comment = "#>", eval=TRUE, class.source="courier-font")
 library(GUSLD)
 ```
 
 This tutorial is an introduction to GUSLD, an R package for estimating linkage disequilibrium (LD) using read count data generated from high-throughput sequencing technology. The methodology underpinning GUSLD to estimate LD is described by @bilton2018genetics2. Some important aspects of GUSLD are:
 
 * GUSLD accounts for data errors in the form of miscalled bases (e.g., sequencing errors) and heterozygous genotypes being called as homozygous due to low sequencing depth (e.g., allelic drop-out). This means that filtering SNPs in regard to read depth is not required and the method is applicable to low-coverage sequencing data.
-* Functionality for filtering SNPs based on minor allele frequency, proportion of missing genotypes and maximum mean SNP read depth is available is GUSLD.
+* Functionality for filtering SNPs based on minor allele frequency, proportion of missing genotypes, Hardy Weinberg disequilibrium and maximum mean SNP read depth is also available in GUSLD.
 
 The above two points mean that very little or no pre-filtering of the sequencing data is usually required before using GUSLD.
 
@@ -32,7 +36,7 @@ vcffile               # filename stored in object vcffile
 
 ## Loading Sequencing Data 
 
-GUSLD uses the functionality available in the GUSbase package to read count data into R. At present, data stored in a Variant Call Format (VCF) file can be used in GUSLD, provided that there is some form of allelic depth information (e.g., the number of reads for the reference and alternate alleles). The `VCFtoRA` function reads data from a a VCF file and converts it into what we call a reference/alternate (RA) file.
+GUSLD uses the functionality available in the GUSbase package to read count data into R. At present, data stored in a Variant Call Format (VCF) file can be used in GUSLD, provided that there is some form of allelic depth information (e.g., the number of reads for the reference and alternate alleles). The `VCFtoRA` function reads data from a VCF file and converts it into what we call a reference/alternate (RA) file.
 
 ```{r loadData}
 # convert VCF file to an RA file
@@ -58,9 +62,9 @@ The RA file created is a tab-delimited file with columns, **CHROM** (the chromos
 |SNP3	  |3       |2,4      |1,1     |0,5     |
 |SNP4	  |4       |4,0      |15,0    |12,0    |
 
-The entry in the second row and the third column is "7,0" which means that 7 reads for the reference allele have been observed and none for the alternate allele. In addition, the third row of the third column is "2,4" which means that 2 reads for the reference allele and 4 reads for the alternate allele have been observed at the SNP on chromosome SNP3 and position 3 in individual Sample1. Note: for this data, SNP calling was performed *de novo* and so each SNP have been given an arbitrary chromosome number and position. For SNPs called via a reference assembly, the chromosome and position columns will correspond to the chromosome and position of the reference assembly at which the SNP was called. 
+The entry in the second row and the third column is "7,0" which means that 7 reads for the reference allele have been observed and none for the alternate allele at SNP on chromosome SNP2 and position 2 in individual Sample1. In addition, the third row of the third column is "2,4" which means that 2 reads for the reference allele and 4 reads for the alternate allele have been observed at the SNP on chromosome SNP3 and position 3 in individual Sample1. Note: for this data, SNP calling was performed *de novo* and so each SNP have been given an arbitrary chromosome number and position. For SNPs called via a reference assembly, the chromosome and position columns will correspond to the chromosome and position of the reference assembly at which the SNP was called. 
 
-At this point, one may ask why not read in sequencing data from a VCF file directly into R? One reason for converting VCF data to RA format is that the size of the dataset is greatly reduced (since only the read counts are retained and the additional information contained in the VCF file is discard). This makes it quicker to read data into R and is especially useful for when one only wants to read in a subset of the data. This can be handle for using GUSLD on a high-performance computing server.
+At this point, one may ask why not read in sequencing data from a VCF file directly into R? One reason for converting VCF data to RA format is that the size of the dataset is greatly reduced (since only the read counts are retained and the additional information contained in the VCF file is discard). This makes it quicker to read data into R and is especially useful for when one only wants to read in a subset of the data. 
 
 An RA file can then be loaded into R using the `readRA` function.
 ```{r readRA}
@@ -79,7 +83,7 @@ class(RAdata)
 ```
 
 Summary information of the RA object can be displayed by printing the object.
-```{r RAdata}
+```{r RAdata, class.source="courier-font"}
 RAdata
 ```
 
@@ -87,8 +91,8 @@ RAdata
 
 The next step in using GUSLD is to create what we call an "unrelated population", which is really a population that is assumed to be in Hardy-Weinberg Equilibrium (HWE). An unrelated population is created using the `makeUR` function.
 ```{r makeUR}
-urpop <- makeUR(RAobj=RAdata, filter = list(MAF = 0.01, MISS = 0.5, MAXDEPTH = 500),
-                nThreads = 2)
+urpop <- makeUR(RAobj = RAdata, filter = list(MAF = 0.01, MISS = 0.5, HW = c(-0.05, Inf), 
+                                              MAXDEPTH = 500), nThreads = 2)
 ```
 
 In addition to creating an unrelated population, the `makeUR` function performs two additional tasks:
@@ -98,7 +102,9 @@ using OpenMP in complied C code where the number of threads used is controlled b
 2. Filters SNPs based on the following criteria
     * `MAF`: Discard SNPs with a MAF below the threshold value (default is 0.01). Note: the MAF used corresponds to what was calculated in the previous step
     * `MISS`: Discard SNPs where the proportion of individuals without a read (e.g., missing genotype) is greater than the threshold value (default is 0.5 (or 50%)).
-    * `MAXDEPTH`: Discard SNPs with a mean read depth above the threshold value (default is 500). This filter is available as SNPs with extremely high read depth tend to be repetitive regions which cause problems in the analysis.
+    * `HW`: Discard SNPs with a Hard Weinberg disquilibrium coefficient below the first threshold value (default is `-0.05`) or above the second threshold value (default `Inf`). This filter is generally used to remove SNPs
+    which represent repetitive regions since they tend to be highly heterozygous.
+    * `MAXDEPTH`: Discard SNPs with a mean read depth above the threshold value (default is 500). This filter is available as SNPs with extremely high read depths tend to be repetitive regions which cause problems in the analysis.
    
 Like an RA object, summary information of the UR object can be displayed by printing the object.
 ```{r urpop}
@@ -112,12 +118,12 @@ Estimation of LD on an unrelated population is performed using the `GUSLD` funct
 LDres <- GUSLD(URobj = urpop, nClust = 2)
 ```
 
-The main argument of the `GUSLD` function is `URobj` which requires an UR object created via the `makeUR` function. By default, estimation of LD is performed for all SNP pairs in the dataset (see the next section for examples of how to set specific SNP pairs) and estimation is parallelized using the `foreach` function in R, where the `nClust` argument specifies the number of cores to use in the parallelization. The output of `GUSLD` is.
+The main argument of the `GUSLD` function is `URobj` which requires an UR object created via the `makeUR` function. By default, estimation of LD is performed for all SNP pairs in the dataset (see the next section for examples of how to set specific SNP pairs) and estimation is parallelized using the `foreach` function in R, where the `nClust` argument specifies the number of cores to use in the parallelization. The first six rows of the output of `GUSLD` is below.
 ```{r allSNPs_output}
 head(LDres)
 ```
 
-The output of GUSLD is a matrix consists of the following columns:
+The output of GUSLD is a matrix consisting of the following columns:
 
 * `r2`: The LD estimate for the squared correlation coefficient.
 * `CHROM_SNP1`: The chromosome number of the first SNP
@@ -129,6 +135,7 @@ The output of GUSLD is a matrix consists of the following columns:
 * `ERR_SNP1`: The sequencing error estimate of the first SNP
 * `ERR_SNP2`: The sequencing error estimate of the second SNP
 
+where each rows represents a LD estimate for a particular SNP pair.
 
 Alternatively, one can also write the LD results to a file instead.
 ```{r allSNPs_file}
@@ -157,13 +164,7 @@ Again, one could write the LD results to a file by specifying the `filename` arg
 
 ### Setting the LD Measures
 
-GUSLD allows estimation of alternative LD measures (provided the LD measure is a function of the disequilibrium coefficient and the allele frequencies) and even multiple LD measures via the `LDmeasure` argument.
-```{r multiple_LDmeasure}
-LDres <- GUSLD(urpop, LDmeasure=c("Dcoef","Dprime","r2"))
-head(LDres)
-```
-
-The LD measures predefined in GUSLD are:
+GUSLD allows estimation of alternative LD measures (provided the LD measure is a function of the disequilibrium coefficient and the allele frequencies) and even multiple LD measures via the `LDmeasure` argument. The LD measures predefined in GUSLD are:
 
 * `Dcoef`: The disequilibrium coefficient (@lewontin1960evolution) defined as $D=p_{A_1A_2} - p_{A_1}p_{A_2}$
 * `Dprime`: The normalized disequilibrium coefficient (@lewontin1964genetics) defined as $D'=D/D_{max}$ where $$D_{max} = min(p_{A_1}p_{A_2},(1-p_{A_1})(1-p_{A_2}))$$ if $D>0$ and $$D_{max} = min(p_{A_1}(1-p_{A_2}),(1-p_{A_1})p_{A_2})$$ if $D<0$.
@@ -173,9 +174,14 @@ where $p_{A_1A_2}$ denotes the proportion of the haplotypes containing the refer
 ```{r compute_LD}
 # To view the function for D'
 Dprime
-
 # To compute D' for D=0.1, pA1=0.5, pA2=0.75
 Dprime(pA1=0.5, pA2=0.75, D=0.1)
+```
+
+Estimation of all three of these LD measures can be achieved in GUSLD as follows:
+```{r multiple_LDmeasure}
+LDres <- GUSLD(urpop, LDmeasure=c("Dcoef","Dprime","r2"))
+head(LDres)
 ```
 
 In addition, one can specify their own LD measure provided it is a function of the disequilibrium coefficient and the allele frequencies. For example, one alternative LD measure is the correlation coefficient defined as
