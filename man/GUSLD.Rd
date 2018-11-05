@@ -28,19 +28,7 @@ the function returns the LD results instead of writing them to a file.}
 Note: only works when \code{file} is not NULL.}
 }
 \value{
-If \code{filename=NULL} and \code{SNPpairs=NULL}, then a list containing the following elements is returned:
-\itemize{
-\item [\emph{LDmeasure}]: Symmetric matrix of LD estimates for LD measure [\emph{LDmeasure}]. Note: if multiple LD measures have been specified,
-then there will be a element for each LD measure
-\item p: Vector of allele frequency estimates for each SNP. The ith element of this vector corresponds to the SNP in the ith
-row (or column) of the LD matrix.
-\item ep: Vector of sequencing error estimates for each SNP. The ith element of this vector corresponds to the SNP in the ith
-row (or column) of the LD matrix.
-\item SNP_Names: Vector of SNP names in the format [\emph{CHROM_POS}]. The ith element of this vector corresponds to the SNP in the ith
-row (or column) of the LD matrix.
-}
-
-If \code{filename=NULL} and \code{SNPpairs} is specified, then a matrix is returned with the following columns:
+A matrix object with named columns is returned where the columns are:
 \itemize{
 \item [\emph{LDmeasure}]: The LD estmate for the measure [\emph{LDmeasure}]. Note: if multiple LD measures have been specified,
 then there will be a column for each LD measure
@@ -53,21 +41,8 @@ then there will be a column for each LD measure
 \item ERR_SNP1: The sequencing error estimate of the first SNP (as used in the calculation of the LD measure)
 \item ERR_SNP2: The sequencing error estimate of the second SNP (as used in the calculation of the LD measure)
 }
-
-If \code{filename} is specified and corresponds to a vaild name, then the results are written
-to a file called \emph{filename_GUSMap.txt} which contains the following columns:
-\itemize{
-\item [\emph{LDmeasure}]: The LD estmate for the measure [\emph{LDmeasure}]. Note: if multiple LD measures have been specified,
-then there will be a column for each LD measure
-\item CHROM_SNP1: The chromosome number of the first SNP
-\item CHROM_SNP2: The chromosome number of the second SNP
-\item POS_SNP1: The position (in base pairs) of the first SNP on the chromosome
-\item POS_SNP2: The position (in base pairs) of the second SNP on the chromosome
-\item FREQ_SNP1: The allele frequency estimate of the first SNP (as used in the calculation of the LD measure)
-\item FREQ_SNP2: The allele frequency estimate of the second SNP (as used in the calculation of the LD measure)
-\item ERR_SNP1: The sequencing error estimate of the first SNP (as used in the calculation of the LD measure)
-\item ERR_SNP2: The sequencing error estimate of the second SNP (as used in the calculation of the LD measure)
-}
+If \code{filename=NULL} then the matrix object is returned to the R workspace, otherwise if \code{filename} is specified
+and corresponds to a vaild name, then the matrix object is written to a file called \emph{filename_GUSMap.txt}.
 }
 \description{
 Function computes the LD estimates for high-throughput sequencing data using the methodology
@@ -96,6 +71,7 @@ ur <- makeUR(deer)
 ###### LD estimation #######
 ## Estimate all the pairwise LD
 LDres <- GUSLD(ur)
+head(LDres)
 
 ## write results to file
 GUSLD(ur, file="results")
@@ -104,12 +80,14 @@ GUSLD(ur, file="results")
 # block vs block
 pairs <- as.matrix(expand.grid(1:10,11:20))
 LDres <- GUSLD(ur, SNPpairs=pairs)
+head(LDres)
 
 # Five SNPs before and after
 temp <- rep(1:37,rep(5,37))
 pairs <- cbind(temp, temp + 1:5)
 pairs <- pairs[-which(pairs[,2] > 38),]
 LDres <- GUSLD(ur, SNPpairs=pairs)
+head(LDres)
 
 ##### Non-standard LD measure: #######
 ## Define LD measure as the correlation coefficient
@@ -117,6 +95,7 @@ LD_r <- function(pA1,pA2,D){
 return( D/sqrt((prod(c(pA1,pA2,1-c(pA1,pA2))))) )
 }
 LDres <- GUSLD(ur, LDmeasure="LD_r")
+head(LDres)
 
 }
 \references{
