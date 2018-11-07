@@ -1,0 +1,207 @@
+---
+title: "Introduction to GUSLD"
+author: "Timothy P. Bilton"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+bibliography: "../inst/REFERENCES.bib"  
+biblio-style: "apalike"
+---
+
+```{css echo=FALSE}
+.courier-font {font-family: Courier New, Courier, monospace;}
+```
+
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set( collapse = TRUE, comment = "#>", eval=TRUE, class.source="courier-font")
+library(GUSLD)
+```
+
+This tutorial is an introduction to GUSLD, an R package for estimating linkage disequilibrium (LD) using read count data generated from high-throughput sequencing technology. The methodology underpinning GUSLD to estimate LD is described by @bilton2018genetics2. Some important aspects of GUSLD are:
+
+* GUSLD accounts for data errors in the form of miscalled bases (e.g., sequencing errors) and heterozygous genotypes being called as homozygous due to low sequencing depth (e.g., allelic drop-out). This means that filtering SNPs in regard to read depth is not required and the method is applicable to low-coverage sequencing data.
+* Functionality for filtering SNPs based on minor allele frequency, proportion of missing genotypes, Hardy Weinberg disequilibrium and maximum mean SNP read depth is also available in GUSLD.
+
+The above two points mean that very little or no pre-filtering of the sequencing data is usually required before using GUSLD.
+
+For this tutorial, we will use a dataset consisting of 704 individuals (species is deer) and 38 SNPs genotyped using genotyping-by-sequencing (GBS). This data accompanines the GUSLD package and is stored as a Variant Call Format (VCF) file. The file name to the VCF file can be obtained using the `deerData()` function.
+```{r simDS}
+vcffile <- deerData() # extract filename
+vcffile               # filename stored in object vcffile
+```
+
+## Loading Sequencing Data 
+
+GUSLD uses the functionality available in the GUSbase package to read count data into R. At present, data stored in a Variant Call Format (VCF) file can be used in GUSLD, provided that there is some form of allelic depth information (e.g., the number of reads for the reference and alternate alleles). The `VCFtoRA` function reads data from a VCF file and converts it into what we call a reference/alternate (RA) file.
+
+```{r loadData}
+# convert VCF file to an RA file
+rafile <- VCFtoRA(infilename = vcffile, direct = "./")
+```
+
+The important arguments of the `VCFtoRA` function are:
+
+1. `infilename`: The name of the VCF file to be converted to RA format. 
+2. `direct`: Specifies which directory to write the RA file to (relative to the current working directory).
+
+Currently, `VCFtoRA` requires one of the fields **AD**, **AO and RO**, or **DP4** to be present in the VCF file to extract allelic depth information. One other thing to note is that `VCFtoRA` returns the file location of the created RA file.
+```{r rafile}
+rafile # file path of RA file
+```
+
+The RA file created is a tab-delimited file with columns, **CHROM** (the chromosome name taken from the "#CHROM" column in the VCF file), **POS** (the position of the SNP taken from the "POS" column in the VCF file), and **SAMPLES** which consists of the sampleIDs used in the VCF (columns 10 and above in the VCF file). For example, the first five columns and first four rows of the RA file for the deer dataset are:
+
+|CHROM	|POS	   |Sample1  |Sample2 |Sample3 |
+|:------|:-------|:--------|:-------|:-------|
+|SNP1	  |1    	 |0,6      |0,11    |0,3     |
+|SNP2	  |2       |7,0      |5,0     |8,0     |
+|SNP3	  |3       |2,4      |1,1     |0,5     |
+|SNP4	  |4       |4,0      |15,0    |12,0    |
+
+The entry in the second row and the third column is "7,0" which means that 7 reads for the reference allele have been observed and none for the alternate allele at SNP on chromosome SNP2 and position 2 in individual Sample1. In addition, the third row of the third column is "2,4" which means that 2 reads for the reference allele and 4 reads for the alternate allele have been observed at the SNP on chromosome SNP3 and position 3 in individual Sample1. Note: for this data, SNP calling was performed *de novo* and so each SNP have been given an arbitrary chromosome number and position. For SNPs called via a reference assembly, the chromosome and position columns will correspond to the chromosome and position of the reference assembly at which the SNP was called. 
+
+At this point, one may ask why not read in sequencing data from a VCF file directly into R? One reason for converting VCF data to RA format is that the size of the dataset is greatly reduced (since only the read counts are retained and the additional information contained in the VCF file is discard). This makes it quicker to read data into R and is especially useful for when one only wants to read in a subset of the data. 
+
+An RA file can then be loaded into R using the `readRA` function.
+```{r readRA}
+RAdata <- readRA(rafile = rafile, sampthres = 0.01, excsamp = NULL)
+```
+
+The arguments of the `readRA` function are:
+
+1. `rafile`: Name of the RA file to be read into R.
+2. `sampthres`: Specifies the minimum sample depth of an individual before it is removed. This is a filtering step used for removing samples that do not have enough data to be practically useful.
+3. `excsamp`: Specifies IDs of any samples in the RA data set to be discarded (for problematic samples to be removed). The input for `excsamp` must correspond to the sample IDs in the RA file.
+
+The RA data is now stored as an `RA` object.
+```{r class_RAdata}
+class(RAdata)
+```
+
+Summary information of the RA object can be displayed by printing the object.
+```{r RAdata, class.source="courier-font"}
+RAdata
+```
+
+## Creating an Unrelated Population
+
+The next step in using GUSLD is to create what we call an "unrelated population", which is really a population that is assumed to be in Hardy-Weinberg Equilibrium (HWE). An unrelated population is created using the `makeUR` function.
+```{r makeUR}
+urpop <- makeUR(RAobj = RAdata, filter = list(MAF = 0.01, MISS = 0.5, HW = c(-0.05, Inf), 
+                                              MAXDEPTH = 500), nThreads = 2)
+```
+
+In addition to creating an unrelated population, the `makeUR` function performs two additional tasks:
+
+1. Estimates the allele frequency and sequencing error for each SNP. The estimation process is parallelized 
+using OpenMP in complied C code where the number of threads used is controlled by the `nThreads` argument.
+2. Filters SNPs based on the following criteria
+    * `MAF`: Discard SNPs with a MAF below the threshold value (default is 0.01). Note: the MAF used corresponds to what was calculated in the previous step
+    * `MISS`: Discard SNPs where the proportion of individuals without a read (e.g., missing genotype) is greater than the threshold value (default is 0.5 (or 50%)).
+    * `HW`: Discard SNPs with a Hard Weinberg disquilibrium coefficient below the first threshold value (default is `-0.05`) or above the second threshold value (default `Inf`). This filter is generally used to remove SNPs
+    which represent repetitive regions since they tend to be highly heterozygous.
+    * `MAXDEPTH`: Discard SNPs with a mean read depth above the threshold value (default is 500). This filter is available as SNPs with extremely high read depths tend to be repetitive regions which cause problems in the analysis.
+   
+Like an RA object, summary information of the UR object can be displayed by printing the object.
+```{r urpop}
+urpop
+```
+
+## Estimating Linkage Disequilibrium
+
+Estimation of LD on an unrelated population is performed using the `GUSLD` function.
+```{r allSNPs}
+LDres <- GUSLD(URobj = urpop, nClust = 2)
+```
+
+The main argument of the `GUSLD` function is `URobj` which requires an UR object created via the `makeUR` function. By default, estimation of LD is performed for all SNP pairs in the dataset (see the next section for examples of how to set specific SNP pairs) and estimation is parallelized using the `foreach` function in R, where the `nClust` argument specifies the number of cores to use in the parallelization. The first six rows of the output of `GUSLD` is below.
+```{r allSNPs_output}
+head(LDres)
+```
+
+The output of GUSLD is a matrix consisting of the following columns:
+
+* `r2`: The LD estimate for the squared correlation coefficient.
+* `CHROM_SNP1`: The chromosome number of the first SNP
+* `CHROM_SNP2`: The chromosome number of the second SNP
+* `POS_SNP1`: The position (in base pairs) of the first SNP on the chromosome
+* `POS_SNP2`: The position (in base pairs) of the second SNP on the chromosome
+* `FREQ_SNP1`: The allele frequency estimate of the first SNP
+* `FREQ_SNP2`: The allele frequency estimate of the second SNP
+* `ERR_SNP1`: The sequencing error estimate of the first SNP
+* `ERR_SNP2`: The sequencing error estimate of the second SNP
+
+where each rows represents a LD estimate for a particular SNP pair.
+
+Alternatively, one can also write the LD results to a file instead.
+```{r allSNPs_file}
+LDres <- GUSLD(urpop, filename="LD_deer", dp = 4)
+```
+
+The argument `filename` specifies the name of the file to write the results to, and the argument `dp` specifies how many decimal places to round the estimates (in case file size is important). The output written is identical to the matrix returned previously.
+
+### LD for Specific SNP pairs
+
+In GUSLD, estimation of LD can be set for specific pairs of SNPs (instead of all pairs) using the `SNPpairs` argument. For example, one could compute the pairwise LD estimates between two blocks of SNPs, where the first block consists of the first 10 SNPs and the second block consists of the next 10 SNPs. First, one needs to create a matrix object containing all the SNP pairs that LD is to be computed.
+```{r subet}
+## set up the SNP pairs
+pairs <- as.matrix(expand.grid(1:10,11:20))
+head(pairs)
+```
+
+The `pairs` object is a two column matrix where the first column represents the first SNP and the second column represents the second SNP and the rows represent each SNP pair for which LD is to be estimated. Then, the LD estimates between all the SNP pairs specified in the `pairs` object can be estimated as follows.
+```{r LDres_block}
+## Compute the LD estimates between SNPs in differen blocks
+LDres <- GUSLD(urpop, SNPpairs = pairs)
+head(LDres)
+```
+
+Again, one could write the LD results to a file by specifying the `filename` argument.
+
+### Setting the LD Measures
+
+GUSLD allows estimation of alternative LD measures (provided the LD measure is a function of the disequilibrium coefficient and the allele frequencies) and even multiple LD measures via the `LDmeasure` argument. The LD measures predefined in GUSLD are:
+
+* `Dcoef`: The disequilibrium coefficient (@lewontin1960evolution) defined as $D=p_{A_1A_2} - p_{A_1}p_{A_2}$
+* `Dprime`: The normalized disequilibrium coefficient (@lewontin1964genetics) defined as $D'=D/D_{max}$ where $$D_{max} = min(p_{A_1}p_{A_2},(1-p_{A_1})(1-p_{A_2}))$$ if $D>0$ and $$D_{max} = min(p_{A_1}(1-p_{A_2}),(1-p_{A_1})p_{A_2})$$ if $D<0$.
+* `r2`: The squared correlation coefficient (@hill1968TAG) defined as $$r^2 = \frac{D^2}{p_{A_1}(1-p_{A_1})p_{A_2}(1-p_{A_2})}$$
+
+where $p_{A_1A_2}$ denotes the proportion of the haplotypes containing the reference allele at both SNPs, while $p_{A_1}$ and $p_{A_2}$ denotes the reference allele frequencies for SNP1 and SNP2 respectively. Each of these measures are defined as a function and be viewed (or evaluated) in R. For example, for the normalized disequilibrium coefficient,
+```{r compute_LD}
+# To view the function for D'
+Dprime
+# To compute D' for D=0.1, pA1=0.5, pA2=0.75
+Dprime(pA1=0.5, pA2=0.75, D=0.1)
+```
+
+Estimation of all three of these LD measures can be achieved in GUSLD as follows:
+```{r multiple_LDmeasure}
+LDres <- GUSLD(urpop, LDmeasure=c("Dcoef","Dprime","r2"))
+head(LDres)
+```
+
+In addition, one can specify their own LD measure provided it is a function of the disequilibrium coefficient and the allele frequencies. For example, one alternative LD measure is the correlation coefficient defined as
+$$ r = \frac{D}{\sqrt{p_{A_1}(1-p_{A_1})p_{A_2}(1-p_{A_2})}} $$
+To estimate the correlation coefficient, an R function first needs to be defined that computes the correlation coefficient given the disequilibrium coefficient (`D`) and the allele frequencies (`pA1` and `pA2`).
+```{r LD_r}
+## Define the correlation coefficient
+LD_r <- function(pA1,pA2,D){
+return( D/sqrt((prod(c(pA1,pA2,1-c(pA1,pA2))))) )
+}
+``` 
+Then in GUSLD, estimation of the correlation coefficient for all SNP pairs in the deer dataset can be achieved using the following code.
+```{r LDmes_r}
+LDres <- GUSLD(urpop, LDmeasure = "LD_r")
+head(LDres)
+```
+
+
+## Final Comments
+
+GUSLD is under continuous development. The author welcomes suggests for improvement and is open to contributions (via pull requests in GitHub), provided that these fit with the flavour of the package. 
+
+## References
