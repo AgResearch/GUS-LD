@@ -145,8 +145,8 @@ GUSLD <- function(URobj, SNPpairs=NULL, indsubset=NULL, nClust=2, LDmeasure="r2"
   if(is.null(SNPpairs)){
     snps <- 1:URobj$.__enclos_env__$private$nSnps
     ## Set up the clusters
-    cl <- parallel::makeCluster(nClust)
-    doParallel::registerDoParallel(cl)
+    #cl <- parallel::makeCluster(nClust)
+    doParallel::registerDoParallel(nClust)
     nSnps <- length(snps)
     ## estimate the pairwise LD
     res <- foreach::foreach(snp1=1:nSnps,.combine=GUSbase:::comb_mat, .export=LDmeasure,
@@ -181,7 +181,7 @@ GUSLD <- function(URobj, SNPpairs=NULL, indsubset=NULL, nClust=2, LDmeasure="r2"
       }
       return(LDvec)
     }
-    parallel::stopCluster(cl)
+    #parallel::stopCluster(cl)
     ## format result to write to file
     # if(writeFile){
       indx <- which(upper.tri(res[[1]]), arr.ind=T)
@@ -229,8 +229,8 @@ GUSLD <- function(URobj, SNPpairs=NULL, indsubset=NULL, nClust=2, LDmeasure="r2"
     ## Work out the number of pairs
     npairs <- nrow(SNPpairs)
     ## Set up the clusters
-    cl <- parallel::makeCluster(nClust)
-    doParallel::registerDoParallel(cl)
+    #cl <- parallel::makeCluster(nClust)
+    doParallel::registerDoParallel(nClust)
     ## compute the LD for specified SNP pairs
     res <- foreach::foreach(pair=1:npairs, .combine="rbind", .export=LDmeasure) %dopar% {
       LDvec <- rep(NA,length(LDmeasure))
@@ -260,7 +260,7 @@ GUSLD <- function(URobj, SNPpairs=NULL, indsubset=NULL, nClust=2, LDmeasure="r2"
       }
       return(LDvec)
     }
-    parallel::stopCluster(cl)
+    #parallel::stopCluster(cl)
     res <- unname(res)
     out <- as.data.frame(matrix(nrow=npairs, ncol=length(LDmeasure) + 8))
     out[1:length(LDmeasure)] <- format(round(res,dp), scientific = FALSE,drop0trailing = TRUE)
