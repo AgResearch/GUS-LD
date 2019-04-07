@@ -1,7 +1,7 @@
 Package: GUSLD
 Title: Genotyping Uncertainty with Sequencing Data - Linkage Disequilibrium
 Date: 2018-10-22
-Version: 1.0.0
+Version: 1.0.1
 Authors@R: person("Timothy P.", "Bilton", email = "tbilton@maths.otago.ac.nz", role = c("aut", "cre"))
 Description: Package for estimating linkage disequilibrium using high-throughput sequencing data while accounting for sequencing errors and under-called heterozygous genotypes due to low sequencing depth.
 Depends: R (>= 3.1.0), GUSbase

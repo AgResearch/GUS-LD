@@ -151,7 +151,7 @@ GUSLD <- function(URobj, SNPpairs=NULL, indsubset=NULL, nClust=2, LDmeasure="r2"
     ## estimate the pairwise LD
     res <- foreach::foreach(snp1=1:nSnps,.combine=GUSbase:::comb_mat, .export=LDmeasure,
                    .multicombine=TRUE) %dopar% {
-      LDvec <- c(replicate(length(LDmeasure),numeric(nSnps),simplify=F))
+      LDvec <- c(replicate(length(LDmeasure) + 1,numeric(nSnps),simplify=F))
       for(snp2 in seq_len(snp1-1)){
         ind <- snps[c(snp1,snp2)]
         temp <- URobj$.__enclos_env__$private$pfreq[ind]
@@ -159,24 +159,34 @@ GUSLD <- function(URobj, SNPpairs=NULL, indsubset=NULL, nClust=2, LDmeasure="r2"
         pA2_hat = temp[2]
         C1hat = max(-prod(c(pA1_hat,pA2_hat)),-prod(1-c(pA1_hat,pA2_hat)))
         C2hat = min((1-pA1_hat)*pA2_hat,pA1_hat*(1-pA2_hat))
-        MLE <- try(stats::optimize(f = ll_gusld, tol=1e-7,
-                         lower=C1hat, upper=C2hat, p=c(pA1_hat,pA2_hat),
-                         ep=URobj$.__enclos_env__$private$ep[ind],
-                         ref=URobj$.__enclos_env__$private$ref[indsubset,ind],
-                         alt=URobj$.__enclos_env__$private$alt[indsubset,ind],
-                         nInd=nind))
-        ## check that the estimation process worked
-        if(class(MLE)=="try-error")
-          D_hat = NA
-        else
-          D_hat = MLE$minimum
-        ## generate the estimates
-        depth <- URobj$.__enclos_env__$private$ref[indsubset,ind] + URobj$.__enclos_env__$private$alt[indsubset,ind]
-        N <- sum(apply(depth, 1, function(x) all(!is.na(x))))
-        D_hat <- D_hat*(2*N/(2*N-1))
-        D_hat <- ifelse(D_hat>=0,min(D_hat,C2hat),max(D_hat,C1hat))
-        for(meas in 1:length(LDmeasure)) {
-          LDvec[[meas]][snp2] <- get(LDmeasure[meas])(pA1=pA1_hat,pA2=pA2_hat,D=D_hat)
+        ref_temp <- URobj$.__enclos_env__$private$ref[indsubset,ind]
+        alt_temp <- URobj$.__enclos_env__$private$alt[indsubset,ind]
+        depth <- ref_temp + alt_temp
+        N <- sum(apply(depth, 1, function(x) all(x > 0)))
+        LDvec[[length(LDmeasure) + 1]][snp2] <- N
+        if(N > 2){
+          MLE <- try(stats::optimize(f = ll_gusld, tol=1e-7,
+                           lower=C1hat, upper=C2hat, p=c(pA1_hat,pA2_hat),
+                           ep=URobj$.__enclos_env__$private$ep[ind],
+                           ref=URobj$.__enclos_env__$private$ref[indsubset,ind],
+                           alt=URobj$.__enclos_env__$private$alt[indsubset,ind],
+                           nInd=nind))
+          ## check that the estimation process worked
+          if(class(MLE)=="try-error")
+            D_hat = NA
+          else
+            D_hat = MLE$minimum
+          ## generate the estimates
+          D_hat <- D_hat*(2*N/(2*N-1))
+          D_hat <- ifelse(D_hat>=0,min(D_hat,C2hat),max(D_hat,C1hat))
+          for(meas in 1:length(LDmeasure)) {
+            LDvec[[meas]][snp2] <- get(LDmeasure[meas])(pA1=pA1_hat,pA2=pA2_hat,D=D_hat)
+          }
+        }
+        else{
+          for(meas in 1:length(LDmeasure)) {
+            LDvec[[meas]][snp2] <- NA
+          }
         }
       }
       return(LDvec)
@@ -195,8 +205,9 @@ GUSLD <- function(URobj, SNPpairs=NULL, indsubset=NULL, nClust=2, LDmeasure="r2"
       out[length(LDmeasure)+5:8] <- format(c(
           round(URobj$.__enclos_env__$private$pfreq[snps][indx],dp),
           round(URobj$.__enclos_env__$private$ep[snps][indx],dp)))
+      out[length(LDmeasure) + 9] <- res[[length(LDmeasure) + 1]][indx]
       colnames(out) <- c(LDmeasure, "CHROM_SNP1","CHROM_SNP2","POS_SNP1","POS_SNP2",
-                         "FREQ_SNP1","FREQ_SNP2","ERR_SNP1","ERR_SNP2")
+                         "FREQ_SNP1","FREQ_SNP2","ERR_SNP1","ERR_SNP2","N")
       if(writeFile){
         data.table::fwrite(out, file = outfilename, quote=FALSE, nThread = nClust)
         cat("Name of LD results file:    \t",outfilename,"\n")
@@ -240,38 +251,46 @@ GUSLD <- function(URobj, SNPpairs=NULL, indsubset=NULL, nClust=2, LDmeasure="r2"
       pA2_hat = temp[2]
       C1hat = max(-prod(c(pA1_hat,pA2_hat)),-prod(1-c(pA1_hat,pA2_hat)))
       C2hat = min((1-pA1_hat)*pA2_hat,pA1_hat*(1-pA2_hat))
-      MLE <- try(stats::optimize(f = ll_gusld, tol=1e-6,
-                         lower=C1hat, upper=C2hat, p=c(pA1_hat,pA2_hat),
-                         ep=URobj$.__enclos_env__$private$ep[ind],
-                         ref=URobj$.__enclos_env__$private$ref[indsubset,ind],
-                         alt=URobj$.__enclos_env__$private$alt[indsubset,ind],
-                         nInd=nind))
-      ## check that the estimation process worked
-      if(class(MLE)!="try-error"){
-        D_hat = MLE$minimum
-        ## generate the estimates
-        depth <- URobj$.__enclos_env__$private$ref[indsubset,ind] + URobj$.__enclos_env__$private$alt[indsubset,ind]
-        N <- sum(apply(depth, 1, function(x) all(!is.na(x))))
-        D_hat <- D_hat*(2*N/(2*N-1))
-        D_hat <- ifelse(D_hat>=0,min(D_hat,C2hat),max(D_hat,C1hat))
+      ref_temp <- URobj$.__enclos_env__$private$ref[indsubset,ind]
+      alt_temp <- URobj$.__enclos_env__$private$alt[indsubset,ind]
+      depth <- ref_temp + alt_temp
+      N <- sum(apply(depth, 1, function(x) all(x > 0)))
+      if(N > 2){
+        MLE <- try(stats::optimize(f = ll_gusld, tol=1e-6,
+                           lower=C1hat, upper=C2hat, p=c(pA1_hat,pA2_hat),
+                           ep=URobj$.__enclos_env__$private$ep[ind],
+                           ref=ref_temp, alt=alt_temp,
+                           nInd=nind))
+        ## check that the estimation process worked
+        if(class(MLE)!="try-error"){
+          D_hat = MLE$minimum
+          ## generate the estimates
+          D_hat <- D_hat*(2*N/(2*N-1))
+          D_hat <- ifelse(D_hat>=0,min(D_hat,C2hat),max(D_hat,C1hat))
+          for(meas in 1:length(LDmeasure)){
+            LDvec[meas] <- get(LDmeasure[meas])(pA1=pA1_hat,pA2=pA2_hat,D=D_hat)
+          }
+        }
+      } else{
         for(meas in 1:length(LDmeasure)){
-          LDvec[meas] <- get(LDmeasure[meas])(pA1=pA1_hat,pA2=pA2_hat,D=D_hat)
+          LDvec[meas] <- NA
         }
       }
-      return(LDvec)
+      return(c(LDvec,N))
     }
     #parallel::stopCluster(cl)
     res <- unname(res)
-    out <- as.data.frame(matrix(nrow=npairs, ncol=length(LDmeasure) + 8))
-    out[1:length(LDmeasure)] <- format(round(res,dp), scientific = FALSE,drop0trailing = TRUE)
+    out <- as.data.frame(matrix(nrow=npairs, ncol=length(LDmeasure) + 9))
+    out[1:length(LDmeasure)] <- format(round(res[,1:length(LDmeasure)],dp), scientific = FALSE,drop0trailing = TRUE)
     out[length(LDmeasure) + 1:4] <- c(URobj$.__enclos_env__$private$chrom[SNPpairs],
                                       URobj$.__enclos_env__$private$pos[SNPpairs])
     out[length(LDmeasure) + 5:8] <- format(c(
       round(URobj$.__enclos_env__$private$pfreq[SNPpairs],dp),
       round(URobj$.__enclos_env__$private$ep[SNPpairs],dp)
     ),scientific = FALSE,drop0trailing = TRUE)
+    out[length(LDmeasure) + 9] <- res[,length(LDmeasure) + 1]
     names(out) <- c(LDmeasure, "CHROM_SNP1","CHROM_SNP2","POS_SNP1","POS_SNP2",
-                    "FREQ_SNP1","FREQ_SNP2","ERR_SNP1","ERR_SNP2")
+                    "FREQ_SNP1","FREQ_SNP2","ERR_SNP1","ERR_SNP2","N")
     ## return the results
     if(writeFile)
       data.table::fwrite(out,file = outfilename, quote = FALSE, nThread = nClust)
