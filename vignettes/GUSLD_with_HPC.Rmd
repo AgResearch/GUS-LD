@@ -58,7 +58,7 @@ srun GUSLD_est_LD.R $NO_BLOCKS $NSNPS
 
 The file **GUSLD_est_LD.R** is,
 
-```{r est_LD}
+```{r est_LD, eval=FALSE}
 #### file: GUSLD_est_LD.R
 
 ## Determine how to break up the data set
