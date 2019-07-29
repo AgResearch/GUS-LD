@@ -21,7 +21,7 @@ Note: Some of the functions are coded in C and therefore an appropriate C compil
 
 ### Tutorials:
 
-The best way to understand how to use GUSLD is to read through the [Introduction](http://htmlpreview.github.io/?https://github.com/AgResearch/GUS-LD/blob/master/inst/doc/Introduction.html) Tutorial contained in the package.
+The best way to understand how to use GUSLD is to read through the [Introduction](http://htmlpreview.github.io/?https://github.com/AgResearch/GUS-LD/blob/master/doc/Introduction.html) Tutorial contained in the package.
 
 ### Development:
 
