@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+
+<meta charset="utf-8" />
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="pandoc" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<meta name="author" content="Timothy P. Bilton" />
+
+<meta name="date" content="2019-07-30" />
+
+<title>Introduction to GUSLD</title>
+
+
+
+<style type="text/css">code{white-space: pre;}</style>
+<style type="text/css" data-origin="pandoc">
+div.sourceCode { overflow-x: auto; }
+table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
+  margin: 0; padding: 0; vertical-align: baseline; border: none; }
+table.sourceCode { width: 100%; line-height: 100%; }
+td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; color: #aaaaaa; border-right: 1px solid #aaaaaa; }
+td.sourceCode { padding-left: 5px; }
+code > span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code > span.dt { color: #902000; } /* DataType */
+code > span.dv { color: #40a070; } /* DecVal */
+code > span.bn { color: #40a070; } /* BaseN */
+code > span.fl { color: #40a070; } /* Float */
+code > span.ch { color: #4070a0; } /* Char */
+code > span.st { color: #4070a0; } /* String */
+code > span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code > span.ot { color: #007020; } /* Other */
+code > span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code > span.fu { color: #06287e; } /* Function */
+code > span.er { color: #ff0000; font-weight: bold; } /* Error */
+code > span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+code > span.cn { color: #880000; } /* Constant */
+code > span.sc { color: #4070a0; } /* SpecialChar */
+code > span.vs { color: #4070a0; } /* VerbatimString */
+code > span.ss { color: #bb6688; } /* SpecialString */
+code > span.im { } /* Import */
+code > span.va { color: #19177c; } /* Variable */
+code > span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code > span.op { color: #666666; } /* Operator */
+code > span.bu { } /* BuiltIn */
+code > span.ex { } /* Extension */
+code > span.pp { color: #bc7a00; } /* Preprocessor */
+code > span.at { color: #7d9029; } /* Attribute */
+code > span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code > span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code > span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    for (var j = 0; j < rules.length; j++) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") continue;
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' || rule.style.backgroundColor === '') continue;
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+<link href="data:text/css;charset=utf-8,body%20%7B%0Abackground%2Dcolor%3A%20%23fff%3B%0Amargin%3A%201em%20auto%3B%0Amax%2Dwidth%3A%20700px%3B%0Aoverflow%3A%20visible%3B%0Apadding%2Dleft%3A%202em%3B%0Apadding%2Dright%3A%202em%3B%0Afont%2Dfamily%3A%20%22Open%20Sans%22%2C%20%22Helvetica%20Neue%22%2C%20Helvetica%2C%20Arial%2C%20sans%2Dserif%3B%0Afont%2Dsize%3A%2014px%3B%0Aline%2Dheight%3A%201%2E35%3B%0A%7D%0A%23header%20%7B%0Atext%2Dalign%3A%20center%3B%0A%7D%0A%23TOC%20%7B%0Aclear%3A%20both%3B%0Amargin%3A%200%200%2010px%2010px%3B%0Apadding%3A%204px%3B%0Awidth%3A%20400px%3B%0Aborder%3A%201px%20solid%20%23CCCCCC%3B%0Aborder%2Dradius%3A%205px%3B%0Abackground%2Dcolor%3A%20%23f6f6f6%3B%0Afont%2Dsize%3A%2013px%3B%0Aline%2Dheight%3A%201%2E3%3B%0A%7D%0A%23TOC%20%2Etoctitle%20%7B%0Afont%2Dweight%3A%20bold%3B%0Afont%2Dsize%3A%2015px%3B%0Amargin%2Dleft%3A%205px%3B%0A%7D%0A%23TOC%20ul%20%7B%0Apadding%2Dleft%3A%2040px%3B%0Amargin%2Dleft%3A%20%2D1%2E5em%3B%0Amargin%2Dtop%3A%205px%3B%0Amargin%2Dbottom%3A%205px%3B%0A%7D%0A%23TOC%20ul%20ul%20%7B%0Amargin%2Dleft%3A%20%2D2em%3B%0A%7D%0A%23TOC%20li%20%7B%0Aline%2Dheight%3A%2016px%3B%0A%7D%0Atable%20%7B%0Amargin%3A%201em%20auto%3B%0Aborder%2Dwidth%3A%201px%3B%0Aborder%2Dcolor%3A%20%23DDDDDD%3B%0Aborder%2Dstyle%3A%20outset%3B%0Aborder%2Dcollapse%3A%20collapse%3B%0A%7D%0Atable%20th%20%7B%0Aborder%2Dwidth%3A%202px%3B%0Apadding%3A%205px%3B%0Aborder%2Dstyle%3A%20inset%3B%0A%7D%0Atable%20td%20%7B%0Aborder%2Dwidth%3A%201px%3B%0Aborder%2Dstyle%3A%20inset%3B%0Aline%2Dheight%3A%2018px%3B%0Apadding%3A%205px%205px%3B%0A%7D%0Atable%2C%20table%20th%2C%20table%20td%20%7B%0Aborder%2Dleft%2Dstyle%3A%20none%3B%0Aborder%2Dright%2Dstyle%3A%20none%3B%0A%7D%0Atable%20thead%2C%20table%20tr%2Eeven%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0A%7D%0Ap%20%7B%0Amargin%3A%200%2E5em%200%3B%0A%7D%0Ablockquote%20%7B%0Abackground%2Dcolor%3A%20%23f6f6f6%3B%0Apadding%3A%200%2E25em%200%2E75em%3B%0A%7D%0Ahr%20%7B%0Aborder%2Dstyle%3A%20solid%3B%0Aborder%3A%20none%3B%0Aborder%2Dtop%3A%201px%20solid%20%23777%3B%0Amargin%3A%2028px%200%3B%0A%7D%0Adl%20%7B%0Amargin%2Dleft%3A%200%3B%0A%7D%0Adl%20dd%20%7B%0Amargin%2Dbottom%3A%2013px%3B%0Amargin%2Dleft%3A%2013px%3B%0A%7D%0Adl%20dt%20%7B%0Afont%2Dweight%3A%20bold%3B%0A%7D%0Aul%20%7B%0Amargin%2Dtop%3A%200%3B%0A%7D%0Aul%20li%20%7B%0Alist%2Dstyle%3A%20circle%20outside%3B%0A%7D%0Aul%20ul%20%7B%0Amargin%2Dbottom%3A%200%3B%0A%7D%0Apre%2C%20code%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0Aborder%2Dradius%3A%203px%3B%0Acolor%3A%20%23333%3B%0Awhite%2Dspace%3A%20pre%2Dwrap%3B%20%0A%7D%0Apre%20%7B%0Aborder%2Dradius%3A%203px%3B%0Amargin%3A%205px%200px%2010px%200px%3B%0Apadding%3A%2010px%3B%0A%7D%0Apre%3Anot%28%5Bclass%5D%29%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0A%7D%0Acode%20%7B%0Afont%2Dfamily%3A%20Consolas%2C%20Monaco%2C%20%27Courier%20New%27%2C%20monospace%3B%0Afont%2Dsize%3A%2085%25%3B%0A%7D%0Ap%20%3E%20code%2C%20li%20%3E%20code%20%7B%0Apadding%3A%202px%200px%3B%0A%7D%0Adiv%2Efigure%20%7B%0Atext%2Dalign%3A%20center%3B%0A%7D%0Aimg%20%7B%0Abackground%2Dcolor%3A%20%23FFFFFF%3B%0Apadding%3A%202px%3B%0Aborder%3A%201px%20solid%20%23DDDDDD%3B%0Aborder%2Dradius%3A%203px%3B%0Aborder%3A%201px%20solid%20%23CCCCCC%3B%0Amargin%3A%200%205px%3B%0A%7D%0Ah1%20%7B%0Amargin%2Dtop%3A%200%3B%0Afont%2Dsize%3A%2035px%3B%0Aline%2Dheight%3A%2040px%3B%0A%7D%0Ah2%20%7B%0Aborder%2Dbottom%3A%204px%20solid%20%23f7f7f7%3B%0Apadding%2Dtop%3A%2010px%3B%0Apadding%2Dbottom%3A%202px%3B%0Afont%2Dsize%3A%20145%25%3B%0A%7D%0Ah3%20%7B%0Aborder%2Dbottom%3A%202px%20solid%20%23f7f7f7%3B%0Apadding%2Dtop%3A%2010px%3B%0Afont%2Dsize%3A%20120%25%3B%0A%7D%0Ah4%20%7B%0Aborder%2Dbottom%3A%201px%20solid%20%23f7f7f7%3B%0Amargin%2Dleft%3A%208px%3B%0Afont%2Dsize%3A%20105%25%3B%0A%7D%0Ah5%2C%20h6%20%7B%0Aborder%2Dbottom%3A%201px%20solid%20%23ccc%3B%0Afont%2Dsize%3A%20105%25%3B%0A%7D%0Aa%20%7B%0Acolor%3A%20%230033dd%3B%0Atext%2Ddecoration%3A%20none%3B%0A%7D%0Aa%3Ahover%20%7B%0Acolor%3A%20%236666ff%3B%20%7D%0Aa%3Avisited%20%7B%0Acolor%3A%20%23800080%3B%20%7D%0Aa%3Avisited%3Ahover%20%7B%0Acolor%3A%20%23BB00BB%3B%20%7D%0Aa%5Bhref%5E%3D%22http%3A%22%5D%20%7B%0Atext%2Ddecoration%3A%20underline%3B%20%7D%0Aa%5Bhref%5E%3D%22https%3A%22%5D%20%7B%0Atext%2Ddecoration%3A%20underline%3B%20%7D%0A%0Acode%20%3E%20span%2Ekw%20%7B%20color%3A%20%23555%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%0Acode%20%3E%20span%2Edt%20%7B%20color%3A%20%23902000%3B%20%7D%20%0Acode%20%3E%20span%2Edv%20%7B%20color%3A%20%2340a070%3B%20%7D%20%0Acode%20%3E%20span%2Ebn%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Efl%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Ech%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Est%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Eco%20%7B%20color%3A%20%23888888%3B%20font%2Dstyle%3A%20italic%3B%20%7D%20%0Acode%20%3E%20span%2Eot%20%7B%20color%3A%20%23007020%3B%20%7D%20%0Acode%20%3E%20span%2Eal%20%7B%20color%3A%20%23ff0000%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%0Acode%20%3E%20span%2Efu%20%7B%20color%3A%20%23900%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%20code%20%3E%20span%2Eer%20%7B%20color%3A%20%23a61717%3B%20background%2Dcolor%3A%20%23e3d2d2%3B%20%7D%20%0A" rel="stylesheet" type="text/css" />
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Introduction to GUSLD</h1>
+<h4 class="author">Timothy P. Bilton</h4>
+<h4 class="date">2019-07-30</h4>
+
+
+
+<style type="text/css">
+.courier-font {font-family: Courier New, Courier, monospace;}
+</style>
+<p>This tutorial is an introduction to GUSLD, an R package for estimating linkage disequilibrium (LD) using read count data generated from high-throughput sequencing technology. The methodology underpinning GUSLD to estimate LD is described by <span class="citation">Bilton et al. (2018)</span>. Some important aspects of GUSLD are:</p>
+<ul>
+<li>GUSLD accounts for data errors in the form of miscalled bases (e.g., sequencing errors) and heterozygous genotypes being called as homozygous due to low sequencing depth (e.g., allelic drop-out). This means that filtering SNPs in regard to read depth is not required and the method is applicable to low-coverage sequencing data.</li>
+<li>Functionality for filtering SNPs based on minor allele frequency, proportion of missing genotypes, Hardy Weinberg disequilibrium and maximum mean SNP read depth is also available in GUSLD.</li>
+</ul>
+<p>The above two points mean that very little or no pre-filtering of the sequencing data is usually required before using GUSLD.</p>
+<p>For this tutorial, we will use a dataset consisting of 704 individuals (species is deer) and 38 SNPs genotyped using genotyping-by-sequencing (GBS). This data accompanines the GUSLD package and is stored as a Variant Call Format (VCF) file. The file name to the VCF file can be obtained using the <code>deerData()</code> function.</p>
+<div class="sourceCode"><pre class="sourceCode r courier-font"><code class="sourceCode r">vcffile &lt;-<span class="st"> </span><span class="kw">deerData</span>() <span class="co"># extract filename</span>
+vcffile               <span class="co"># filename stored in object vcffile</span>
+<span class="co">#&gt; [1] &quot;C:/Users/biltont/AppData/Local/Temp/1/RtmpcrJgG8/temp_libpath3a7c48c9571e/GUSLD/extdata/deer.vcf&quot;</span></code></pre></div>
+<div id="loading-sequencing-data" class="section level2">
+<h2>Loading Sequencing Data</h2>
+<p>GUSLD uses the functionality available in the GUSbase package to read count data into R. At present, data stored in a Variant Call Format (VCF) file can be used in GUSLD, provided that there is some form of allelic depth information (e.g., the number of reads for the reference and alternate alleles). The <code>VCFtoRA</code> function reads data from a VCF file and converts it into what we call a reference/alternate (RA) file.</p>
+<div class="sourceCode"><pre class="sourceCode r courier-font"><code class="sourceCode r"><span class="co"># convert VCF file to an RA file</span>
+rafile &lt;-<span class="st"> </span><span class="kw">VCFtoRA</span>(<span class="dt">infilename =</span> vcffile, <span class="dt">direct =</span> <span class="st">&quot;./&quot;</span>)
+<span class="co">#&gt; Processing VCF file: Converting to RA format.</span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt; Found 704 samples</span>
+<span class="co">#&gt; 38 SNPs written</span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt; Name of RA file:              deer.vcf.ra.tab </span>
+<span class="co">#&gt; Location of RA file:         \\isamba/biltont/R/Package_development/GUS-LD/vignettes/</span></code></pre></div>
+<p>The important arguments of the <code>VCFtoRA</code> function are:</p>
+<ol style="list-style-type: decimal">
+<li><code>infilename</code>: The name of the VCF file to be converted to RA format.</li>
+<li><code>direct</code>: Specifies which directory to write the RA file to (relative to the current working directory).</li>
+</ol>
+<p>Currently, <code>VCFtoRA</code> requires one of the fields <strong>AD</strong>, <strong>AO and RO</strong>, or <strong>DP4</strong> to be present in the VCF file to extract allelic depth information. One other thing to note is that <code>VCFtoRA</code> returns the file location of the created RA file.</p>
+<div class="sourceCode"><pre class="sourceCode r courier-font"><code class="sourceCode r">rafile <span class="co"># file path of RA file</span>
+<span class="co">#&gt; [1] &quot;\\\\isamba/biltont/R/Package_development/GUS-LD/vignettes/deer.vcf.ra.tab&quot;</span></code></pre></div>
+<p>The RA file created is a tab-delimited file with columns, <strong>CHROM</strong> (the chromosome name taken from the “#CHROM” column in the VCF file), <strong>POS</strong> (the position of the SNP taken from the “POS” column in the VCF file), and <strong>SAMPLES</strong> which consists of the sampleIDs used in the VCF (columns 10 and above in the VCF file). For example, the first five columns and first four rows of the RA file for the deer dataset are:</p>
+<table>
+<thead>
+<tr class="header">
+<th align="left">CHROM</th>
+<th align="left">POS</th>
+<th align="left">Sample1</th>
+<th align="left">Sample2</th>
+<th align="left">Sample3</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">SNP1</td>
+<td align="left">1</td>
+<td align="left">0,6</td>
+<td align="left">0,11</td>
+<td align="left">0,3</td>
+</tr>
+<tr class="even">
+<td align="left">SNP2</td>
+<td align="left">2</td>
+<td align="left">7,0</td>
+<td align="left">5,0</td>
+<td align="left">8,0</td>
+</tr>
+<tr class="odd">
+<td align="left">SNP3</td>
+<td align="left">3</td>
+<td align="left">2,4</td>
+<td align="left">1,1</td>
+<td align="left">0,5</td>
+</tr>
+<tr class="even">
+<td align="left">SNP4</td>
+<td align="left">4</td>
+<td align="left">4,0</td>
+<td align="left">15,0</td>
+<td align="left">12,0</td>
+</tr>
+</tbody>
+</table>
+<p>The entry in the second row and the third column is “7,0” which means that 7 reads for the reference allele have been observed and none for the alternate allele at SNP on chromosome SNP2 and position 2 in individual Sample1. In addition, the third row of the third column is “2,4” which means that 2 reads for the reference allele and 4 reads for the alternate allele have been observed at the SNP on chromosome SNP3 and position 3 in individual Sample1. Note: for this data, SNP calling was performed <em>de novo</em> and so each SNP have been given an arbitrary chromosome number and position. For SNPs called via a reference assembly, the chromosome and position columns will correspond to the chromosome and position of the reference assembly at which the SNP was called.</p>
+<p>At this point, one may ask why not read in sequencing data from a VCF file directly into R? One reason for converting VCF data to RA format is that the size of the dataset is greatly reduced (since only the read counts are retained and the additional information contained in the VCF file is discard). This makes it quicker to read data into R and is especially useful for when one only wants to read in a subset of the data.</p>
+<p>An RA file can then be loaded into R using the <code>readRA</code> function.</p>
+<div class="sourceCode"><pre class="sourceCode r courier-font"><code class="sourceCode r">RAdata &lt;-<span class="st"> </span><span class="kw">readRA</span>(<span class="dt">rafile =</span> rafile, <span class="dt">sampthres =</span> <span class="fl">0.01</span>, <span class="dt">excsamp =</span> <span class="ot">NULL</span>)</code></pre></div>
+<p>The arguments of the <code>readRA</code> function are:</p>
+<ol style="list-style-type: decimal">
+<li><code>rafile</code>: Name of the RA file to be read into R.</li>
+<li><code>sampthres</code>: Specifies the minimum sample depth of an individual before it is removed. This is a filtering step used for removing samples that do not have enough data to be practically useful.</li>
+<li><code>excsamp</code>: Specifies IDs of any samples in the RA data set to be discarded (for problematic samples to be removed). The input for <code>excsamp</code> must correspond to the sample IDs in the RA file.</li>
+</ol>
+<p>The RA data is now stored as an <code>RA</code> object.</p>
+<div class="sourceCode"><pre class="sourceCode r courier-font"><code class="sourceCode r"><span class="kw">class</span>(RAdata)
+<span class="co">#&gt; [1] &quot;RA&quot; &quot;R6&quot;</span></code></pre></div>
+<p>Summary information of the RA object can be displayed by printing the object.</p>
+<div class="sourceCode"><pre class="sourceCode r courier-font"><code class="sourceCode r">RAdata
+<span class="co">#&gt; Data Summary:</span>
+<span class="co">#&gt; Data file:    \\isamba/biltont/R/Package_development/GUS-LD/vignettes/deer.vcf.ra.tab </span>
+<span class="co">#&gt; Mean Depth:   9.434248 </span>
+<span class="co">#&gt; Mean Call Rate:   0.9655727 </span>
+<span class="co">#&gt; Number of...</span>
+<span class="co">#&gt;   Samples:    704 </span>
+<span class="co">#&gt;   SNPs:       38 </span>
+<span class="co">#&gt;   Reads:  252385</span></code></pre></div>
+</div>
+<div id="creating-an-unrelated-population" class="section level2">
+<h2>Creating an Unrelated Population</h2>
+<p>The next step in using GUSLD is to create what we call an “unrelated population”, which is really a population that is assumed to be in Hardy-Weinberg Equilibrium (HWE). An unrelated population is created using the <code>makeUR</code> function.</p>
+<div class="sourceCode"><pre class="sourceCode r courier-font"><code class="sourceCode r">urpop &lt;-<span class="st"> </span><span class="kw">makeUR</span>(<span class="dt">RAobj =</span> RAdata, <span class="dt">filter =</span> <span class="kw">list</span>(<span class="dt">MAF =</span> <span class="fl">0.01</span>, <span class="dt">MISS =</span> <span class="fl">0.5</span>, <span class="dt">HW =</span> <span class="kw">c</span>(<span class="op">-</span><span class="fl">0.05</span>, <span class="ot">Inf</span>), 
+                                              <span class="dt">MAXDEPTH =</span> <span class="dv">500</span>), <span class="dt">nThreads =</span> <span class="dv">2</span>)
+<span class="co">#&gt; -------------</span>
+<span class="co">#&gt; Processing Data.</span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt; Filtering criteria for removing SNPs:</span>
+<span class="co">#&gt; Minor allele frequency (MAF) &lt; 0.01</span>
+<span class="co">#&gt; Percentage of missing genotypes &gt; 50%</span>
+<span class="co">#&gt; Maximum average SNP read depth &gt; 500</span></code></pre></div>
+<p>In addition to creating an unrelated population, the <code>makeUR</code> function performs two additional tasks:</p>
+<ol style="list-style-type: decimal">
+<li>Estimates the allele frequency and sequencing error for each SNP. The estimation process is parallelized using OpenMP in complied C code where the number of threads used is controlled by the <code>nThreads</code> argument.</li>
+<li>Filters SNPs based on the following criteria
+<ul>
+<li><code>MAF</code>: Discard SNPs with a MAF below the threshold value (default is 0.01). Note: the MAF used corresponds to what was calculated in the previous step</li>
+<li><code>MISS</code>: Discard SNPs where the proportion of individuals without a read (e.g., missing genotype) is greater than the threshold value (default is 0.5 (or 50%)).</li>
+<li><code>HW</code>: Discard SNPs with a Hard Weinberg disquilibrium coefficient below the first threshold value (default is <code>-0.05</code>) or above the second threshold value (default <code>Inf</code>). This filter is generally used to remove SNPs which represent repetitive regions since they tend to be highly heterozygous.</li>
+<li><code>MAXDEPTH</code>: Discard SNPs with a mean read depth above the threshold value (default is 500). This filter is available as SNPs with extremely high read depths tend to be repetitive regions which cause problems in the analysis.</li>
+</ul></li>
+</ol>
+<p>Like an RA object, summary information of the UR object can be displayed by printing the object.</p>
+<div class="sourceCode"><pre class="sourceCode r courier-font"><code class="sourceCode r">urpop
+<span class="co">#&gt; Data Summary:</span>
+<span class="co">#&gt; Data file:    \\isamba/biltont/R/Package_development/GUS-LD/vignettes/deer.vcf.ra.tab </span>
+<span class="co">#&gt; Mean Depth:   9.434248 </span>
+<span class="co">#&gt; Mean Call Rate:   0.9655727 </span>
+<span class="co">#&gt; Number of...</span>
+<span class="co">#&gt;   Samples:    704 </span>
+<span class="co">#&gt;   SNPs:       38 </span>
+<span class="co">#&gt;   Reads:  252385</span></code></pre></div>
+</div>
+<div id="estimating-linkage-disequilibrium" class="section level2">
+<h2>Estimating Linkage Disequilibrium</h2>
+<p>Estimation of LD on an unrelated population is performed using the <code>GUSLD</code> function.</p>
+<div class="sourceCode"><pre class="sourceCode r courier-font"><code class="sourceCode r">LDres &lt;-<span class="st"> </span><span class="kw">GUSLD</span>(<span class="dt">URobj =</span> urpop, <span class="dt">nClust =</span> <span class="dv">2</span>)</code></pre></div>
+<p>The main argument of the <code>GUSLD</code> function is <code>URobj</code> which requires an UR object created via the <code>makeUR</code> function. By default, estimation of LD is performed for all SNP pairs in the dataset (see the next section for examples of how to set specific SNP pairs) and estimation is parallelized using the <code>foreach</code> function in R, where the <code>nClust</code> argument specifies the number of cores to use in the parallelization. The first six rows of the output of <code>GUSLD</code> is below.</p>
+<div class="sourceCode"><pre class="sourceCode r courier-font"><code class="sourceCode r"><span class="kw">head</span>(LDres)
+<span class="co">#&gt;       r2 CHROM_SNP1 CHROM_SNP2 POS_SNP1 POS_SNP2 FREQ_SNP1 FREQ_SNP2</span>
+<span class="co">#&gt; 1 0.0022       SNP1       SNP2        1        2    0.0499    0.7879</span>
+<span class="co">#&gt; 2 0.0153       SNP1       SNP3        1        3    0.0499    0.2262</span>
+<span class="co">#&gt; 3  0.051       SNP2       SNP3        2        3    0.7879    0.2262</span>
+<span class="co">#&gt; 4 0.0047       SNP1       SNP4        1        4    0.0499    0.9029</span>
+<span class="co">#&gt; 5 0.0192       SNP2       SNP4        2        4    0.7879    0.9029</span>
+<span class="co">#&gt; 6 0.0044       SNP3       SNP4        3        4    0.2262    0.9029</span>
+<span class="co">#&gt;   ERR_SNP1 ERR_SNP2   N     Neff</span>
+<span class="co">#&gt; 1   0.0007   0.0040 688 606.1140</span>
+<span class="co">#&gt; 2   0.0007   0.0092 688 604.7145</span>
+<span class="co">#&gt; 3   0.0040   0.0092 690 612.6221</span>
+<span class="co">#&gt; 4   0.0007   0.0007 619 562.4382</span>
+<span class="co">#&gt; 5   0.0040   0.0007 621 573.8339</span>
+<span class="co">#&gt; 6   0.0092   0.0007 621 568.6777</span></code></pre></div>
+<p>The output of GUSLD is a matrix consisting of the following columns:</p>
+<ul>
+<li><code>r2</code>: The LD estimate for the squared correlation coefficient.</li>
+<li><code>CHROM_SNP1</code>: The chromosome number of the first SNP</li>
+<li><code>CHROM_SNP2</code>: The chromosome number of the second SNP</li>
+<li><code>POS_SNP1</code>: The position (in base pairs) of the first SNP on the chromosome</li>
+<li><code>POS_SNP2</code>: The position (in base pairs) of the second SNP on the chromosome</li>
+<li><code>FREQ_SNP1</code>: The allele frequency estimate of the first SNP</li>
+<li><code>FREQ_SNP2</code>: The allele frequency estimate of the second SNP</li>
+<li><code>ERR_SNP1</code>: The sequencing error estimate of the first SNP</li>
+<li><code>ERR_SNP2</code>: The sequencing error estimate of the second SNP</li>
+<li><code>N</code>: The number of individuals with reads at both SNPs</li>
+<li><code>Neff</code>: An effective number of individuals. Calculated as <span class="math inline">\(\sum_i 1-(1/2)^{min(d_i)}\)</span> where <span class="math inline">\(min(d_i)\)</span> is thh minimum read depth at a SNP for individual <span class="math inline">\(i\)</span></li>
+</ul>
+<p>where each rows represents a LD estimate for a particular SNP pair.</p>
+<p>Alternatively, one can also write the LD results to a file instead.</p>
+<div class="sourceCode"><pre class="sourceCode r courier-font"><code class="sourceCode r">LDres &lt;-<span class="st"> </span><span class="kw">GUSLD</span>(urpop, <span class="dt">filename=</span><span class="st">&quot;LD_deer&quot;</span>, <span class="dt">dp =</span> <span class="dv">4</span>)
+<span class="co">#&gt; Name of LD results file:      LD_deer_GUSLD.txt </span>
+<span class="co">#&gt; Location of LD results file: \\isamba/biltont/R/Package_development/GUS-LD/vignettes/</span></code></pre></div>
+<p>The argument <code>filename</code> specifies the name of the file to write the results to, and the argument <code>dp</code> specifies how many decimal places to round the estimates (in case file size is important). The output written is identical to the matrix returned previously.</p>
+<div id="ld-for-specific-snp-pairs" class="section level3">
+<h3>LD for Specific SNP pairs</h3>
+<p>In GUSLD, estimation of LD can be set for specific pairs of SNPs (instead of all pairs) using the <code>SNPpairs</code> argument. For example, one could compute the pairwise LD estimates between two blocks of SNPs, where the first block consists of the first 10 SNPs and the second block consists of the next 10 SNPs. First, one needs to create a matrix object containing all the SNP pairs that LD is to be computed.</p>
+<div class="sourceCode"><pre class="sourceCode r courier-font"><code class="sourceCode r">## set up the SNP pairs
+pairs &lt;-<span class="st"> </span><span class="kw">as.matrix</span>(<span class="kw">expand.grid</span>(<span class="dv">1</span><span class="op">:</span><span class="dv">10</span>,<span class="dv">11</span><span class="op">:</span><span class="dv">20</span>))
+<span class="kw">head</span>(pairs)
+<span class="co">#&gt;      Var1 Var2</span>
+<span class="co">#&gt; [1,]    1   11</span>
+<span class="co">#&gt; [2,]    2   11</span>
+<span class="co">#&gt; [3,]    3   11</span>
+<span class="co">#&gt; [4,]    4   11</span>
+<span class="co">#&gt; [5,]    5   11</span>
+<span class="co">#&gt; [6,]    6   11</span></code></pre></div>
+<p>The <code>pairs</code> object is a two column matrix where the first column represents the first SNP and the second column represents the second SNP and the rows represent each SNP pair for which LD is to be estimated. Then, the LD estimates between all the SNP pairs specified in the <code>pairs</code> object can be estimated as follows.</p>
+<div class="sourceCode"><pre class="sourceCode r courier-font"><code class="sourceCode r">## Compute the LD estimates between SNPs in differen blocks
+LDres &lt;-<span class="st"> </span><span class="kw">GUSLD</span>(urpop, <span class="dt">SNPpairs =</span> pairs)
+<span class="kw">head</span>(LDres)
+<span class="co">#&gt;       r2 CHROM_SNP1 CHROM_SNP2 POS_SNP1 POS_SNP2 FREQ_SNP1 FREQ_SNP2</span>
+<span class="co">#&gt; 1 0.0042       SNP1      SNP11        1       11    0.0499    0.0552</span>
+<span class="co">#&gt; 2 0.0146       SNP2      SNP11        2       11    0.7879    0.0552</span>
+<span class="co">#&gt; 3 0.0171       SNP3      SNP11        3       11    0.2262    0.0552</span>
+<span class="co">#&gt; 4 0.0063       SNP4      SNP11        4       11    0.9029    0.0552</span>
+<span class="co">#&gt; 5 0.0064       SNP5      SNP11        5       11     0.099    0.0552</span>
+<span class="co">#&gt; 6 0.0016       SNP6      SNP11        6       11    0.0608    0.0552</span>
+<span class="co">#&gt;   ERR_SNP1 ERR_SNP2   N     Neff</span>
+<span class="co">#&gt; 1   0.0007   0.0045 609 444.9971</span>
+<span class="co">#&gt; 2    0.004   0.0045 610 451.7471</span>
+<span class="co">#&gt; 3   0.0092   0.0045 610 450.2080</span>
+<span class="co">#&gt; 4   0.0007   0.0045 550 411.3506</span>
+<span class="co">#&gt; 5   0.0006   0.0045 548 408.5928</span>
+<span class="co">#&gt; 6   0.0004   0.0045 604 449.4268</span></code></pre></div>
+<p>Again, one could write the LD results to a file by specifying the <code>filename</code> argument.</p>
+</div>
+<div id="setting-the-ld-measures" class="section level3">
+<h3>Setting the LD Measures</h3>
+<p>GUSLD allows estimation of alternative LD measures (provided the LD measure is a function of the disequilibrium coefficient and the allele frequencies) and even multiple LD measures via the <code>LDmeasure</code> argument. The LD measures predefined in GUSLD are:</p>
+<ul>
+<li><code>Dcoef</code>: The disequilibrium coefficient (<span class="citation">Lewontin and Kojima (1960)</span>) defined as <span class="math inline">\(D=p_{A_1A_2} - p_{A_1}p_{A_2}\)</span></li>
+<li><code>Dprime</code>: The normalized disequilibrium coefficient (<span class="citation">Lewontin (1964)</span>) defined as <span class="math inline">\(D'=D/D_{max}\)</span> where <span class="math display">\[D_{max} = min(p_{A_1}p_{A_2},(1-p_{A_1})(1-p_{A_2}))\]</span> if <span class="math inline">\(D&gt;0\)</span> and <span class="math display">\[D_{max} = min(p_{A_1}(1-p_{A_2}),(1-p_{A_1})p_{A_2})\]</span> if <span class="math inline">\(D&lt;0\)</span>.</li>
+<li><code>r2</code>: The squared correlation coefficient (<span class="citation">Hill and Robertson (1968)</span>) defined as <span class="math display">\[r^2 = \frac{D^2}{p_{A_1}(1-p_{A_1})p_{A_2}(1-p_{A_2})}\]</span></li>
+</ul>
+<p>where <span class="math inline">\(p_{A_1A_2}\)</span> denotes the proportion of the haplotypes containing the reference allele at both SNPs, while <span class="math inline">\(p_{A_1}\)</span> and <span class="math inline">\(p_{A_2}\)</span> denotes the reference allele frequencies for SNP1 and SNP2 respectively. Each of these measures are defined as a function and be viewed (or evaluated) in R. For example, for the normalized disequilibrium coefficient,</p>
+<div class="sourceCode"><pre class="sourceCode r courier-font"><code class="sourceCode r"><span class="co"># To view the function for D'</span>
+Dprime
+<span class="co">#&gt; function (pA1, pA2, D) </span>
+<span class="co">#&gt; {</span>
+<span class="co">#&gt;     C1 = max(-prod(c(pA1, pA2)), -prod(1 - c(pA1, pA2)))</span>
+<span class="co">#&gt;     C2 = min((1 - pA1) * pA2, pA1 * (1 - pA2))</span>
+<span class="co">#&gt;     return(D/ifelse(D &lt; 0, C1, C2))</span>
+<span class="co">#&gt; }</span>
+<span class="co">#&gt; &lt;bytecode: 0x0000000030448530&gt;</span>
+<span class="co">#&gt; &lt;environment: namespace:GUSLD&gt;</span></code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r courier-font"><code class="sourceCode r"><span class="co"># To compute D' for D=0.1, pA1=0.5, pA2=0.75</span>
+<span class="kw">Dprime</span>(<span class="dt">pA1=</span><span class="fl">0.5</span>, <span class="dt">pA2=</span><span class="fl">0.75</span>, <span class="dt">D=</span><span class="fl">0.1</span>)
+<span class="co">#&gt; [1] 0.8</span></code></pre></div>
+<p>Estimation of all three of these LD measures can be achieved in GUSLD as follows:</p>
+<div class="sourceCode"><pre class="sourceCode r courier-font"><code class="sourceCode r">LDres &lt;-<span class="st"> </span><span class="kw">GUSLD</span>(urpop, <span class="dt">LDmeasure=</span><span class="kw">c</span>(<span class="st">&quot;Dcoef&quot;</span>,<span class="st">&quot;Dprime&quot;</span>,<span class="st">&quot;r2&quot;</span>))
+<span class="kw">head</span>(LDres)
+<span class="co">#&gt;     Dcoef Dprime     r2 CHROM_SNP1 CHROM_SNP2 POS_SNP1 POS_SNP2 FREQ_SNP1</span>
+<span class="co">#&gt; 1  0.0042 0.3961 0.0022       SNP1       SNP2        1        2    0.0499</span>
+<span class="co">#&gt; 2 -0.0113      1 0.0153       SNP1       SNP3        1        3    0.0499</span>
+<span class="co">#&gt; 3  0.0386  0.805  0.051       SNP2       SNP3        2        3    0.7879</span>
+<span class="co">#&gt; 4  0.0044 0.9083 0.0047       SNP1       SNP4        1        4    0.0499</span>
+<span class="co">#&gt; 5 -0.0168 0.8144 0.0192       SNP2       SNP4        2        4    0.7879</span>
+<span class="co">#&gt; 6 -0.0082 0.1096 0.0044       SNP3       SNP4        3        4    0.2262</span>
+<span class="co">#&gt;   FREQ_SNP2 ERR_SNP1 ERR_SNP2   N     Neff</span>
+<span class="co">#&gt; 1    0.7879   0.0007   0.0040 688 606.1140</span>
+<span class="co">#&gt; 2    0.2262   0.0007   0.0092 688 604.7145</span>
+<span class="co">#&gt; 3    0.2262   0.0040   0.0092 690 612.6221</span>
+<span class="co">#&gt; 4    0.9029   0.0007   0.0007 619 562.4382</span>
+<span class="co">#&gt; 5    0.9029   0.0040   0.0007 621 573.8339</span>
+<span class="co">#&gt; 6    0.9029   0.0092   0.0007 621 568.6777</span></code></pre></div>
+<p>In addition, one can specify their own LD measure provided it is a function of the disequilibrium coefficient and the allele frequencies. For example, one alternative LD measure is the correlation coefficient defined as <span class="math display">\[ r = \frac{D}{\sqrt{p_{A_1}(1-p_{A_1})p_{A_2}(1-p_{A_2})}} \]</span> To estimate the correlation coefficient, an R function first needs to be defined that computes the correlation coefficient given the disequilibrium coefficient (<code>D</code>) and the allele frequencies (<code>pA1</code> and <code>pA2</code>).</p>
+<div class="sourceCode"><pre class="sourceCode r courier-font"><code class="sourceCode r">## Define the correlation coefficient
+LD_r &lt;-<span class="st"> </span><span class="cf">function</span>(pA1,pA2,D){
+<span class="kw">return</span>( D<span class="op">/</span><span class="kw">sqrt</span>((<span class="kw">prod</span>(<span class="kw">c</span>(pA1,pA2,<span class="dv">1</span><span class="op">-</span><span class="kw">c</span>(pA1,pA2))))) )
+}</code></pre></div>
+<p>Then in GUSLD, estimation of the correlation coefficient for all SNP pairs in the deer dataset can be achieved using the following code.</p>
+<div class="sourceCode"><pre class="sourceCode r courier-font"><code class="sourceCode r">LDres &lt;-<span class="st"> </span><span class="kw">GUSLD</span>(urpop, <span class="dt">LDmeasure =</span> <span class="st">&quot;LD_r&quot;</span>)
+<span class="kw">head</span>(LDres)
+<span class="co">#&gt;      LD_r CHROM_SNP1 CHROM_SNP2 POS_SNP1 POS_SNP2 FREQ_SNP1 FREQ_SNP2</span>
+<span class="co">#&gt; 1  0.0471       SNP1       SNP2        1        2    0.0499    0.7879</span>
+<span class="co">#&gt; 2 -0.1239       SNP1       SNP3        1        3    0.0499    0.2262</span>
+<span class="co">#&gt; 3  0.2258       SNP2       SNP3        2        3    0.7879    0.2262</span>
+<span class="co">#&gt; 4  0.0683       SNP1       SNP4        1        4    0.0499    0.9029</span>
+<span class="co">#&gt; 5 -0.1386       SNP2       SNP4        2        4    0.7879    0.9029</span>
+<span class="co">#&gt; 6 -0.0665       SNP3       SNP4        3        4    0.2262    0.9029</span>
+<span class="co">#&gt;   ERR_SNP1 ERR_SNP2   N     Neff</span>
+<span class="co">#&gt; 1   0.0007   0.0040 688 606.1140</span>
+<span class="co">#&gt; 2   0.0007   0.0092 688 604.7145</span>
+<span class="co">#&gt; 3   0.0040   0.0092 690 612.6221</span>
+<span class="co">#&gt; 4   0.0007   0.0007 619 562.4382</span>
+<span class="co">#&gt; 5   0.0040   0.0007 621 573.8339</span>
+<span class="co">#&gt; 6   0.0092   0.0007 621 568.6777</span></code></pre></div>
+</div>
+</div>
+<div id="final-comments" class="section level2">
+<h2>Final Comments</h2>
+<p>GUSLD is under continuous development. The author welcomes suggests for improvement and is open to contributions (via pull requests in GitHub), provided that these fit with the flavour of the package.</p>
+</div>
+<div id="references" class="section level2 unnumbered">
+<h2>References</h2>
+<div id="refs" class="references">
+<div id="ref-bilton2018genetics2">
+<p>Bilton, Timothy P., John C. McEwan, Shannon M. Clarke, Rudiger Brauning, Tracey C. Stijn, Suzanne J. Rowe, and Ken G. Dodds. 2018. “Linkage Disequilibrium Estimation in Low Coverage High-Throughput Sequencing Data.” <em>Genetics</em> 209 (2): 389–400. doi:<a href="https://doi.org/10.1534/genetics.118.300831">10.1534/genetics.118.300831</a>.</p>
+</div>
+<div id="ref-hill1968TAG">
+<p>Hill, W. G., and Alan Robertson. 1968. “Linkage Disequilibrium in Finite Populations.” <em>Theoretical and Applied Genetics</em> 38 (6). Springer: 226–31. doi:<a href="https://doi.org/10.1007/BF01245622">10.1007/BF01245622</a>.</p>
+</div>
+<div id="ref-lewontin1964genetics">
+<p>Lewontin, R. C. 1964. “The Interaction of Selection and Linkage. I. General Considerations; Heterotic Models.” <em>Genetics</em> 49 (1). Genetics Society of America: 49.</p>
+</div>
+<div id="ref-lewontin1960evolution">
+<p>Lewontin, R. C., and Ken-ichi Kojima. 1960. “The Evolutionary Dynamics of Complex Polymorphisms.” <em>Evolution</em> 14 (4). Wiley Online Library: 458–72.</p>
+</div>
+</div>
+</div>
+
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
