@@ -165,7 +165,7 @@ GUSLD <- function(URobj, SNPpairs=NULL, indsubset=NULL, nClust=2, LDmeasure="r2"
         N <- sum(apply(depth, 1, function(x) all(x > 0)))
         LDvec[[length(LDmeasure) + 1]][snp2] <- N
         if(N > 2){
-          MLE <- try(stats::optimize(f = ll_gusld, tol=1e-7,
+          MLE <- try(stats::optimize(f = ll_gusld, tol=1e-20,
                            lower=C1hat, upper=C2hat, p=c(pA1_hat,pA2_hat),
                            ep=URobj$.__enclos_env__$private$ep[ind],
                            ref=URobj$.__enclos_env__$private$ref[indsubset,ind],
@@ -256,7 +256,7 @@ GUSLD <- function(URobj, SNPpairs=NULL, indsubset=NULL, nClust=2, LDmeasure="r2"
       depth <- ref_temp + alt_temp
       N <- sum(apply(depth, 1, function(x) all(x > 0)))
       if(N > 2){
-        MLE <- try(stats::optimize(f = ll_gusld, tol=1e-6,
+        MLE <- try(stats::optimize(f = ll_gusld, tol=1e-20,
                            lower=C1hat, upper=C2hat, p=c(pA1_hat,pA2_hat),
                            ep=URobj$.__enclos_env__$private$ep[ind],
                            ref=ref_temp, alt=alt_temp,
