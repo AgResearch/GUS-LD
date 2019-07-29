@@ -134,8 +134,8 @@ The output of GUSLD is a matrix consisting of the following columns:
 * `FREQ_SNP2`: The allele frequency estimate of the second SNP
 * `ERR_SNP1`: The sequencing error estimate of the first SNP
 * `ERR_SNP2`: The sequencing error estimate of the second SNP
-* `N`: The number of individuals with reads at both SNPs
-* `Neff`: An effective number of individuals. Calculated as $\sum_i 1-(1/2)^{min(d_i)}$ where $min(d_i)$ is thh minimum read depth at a SNP for individual $i$ 
+* `N`: The number of individuals with reads at both SNPs in the SNP pair
+* `Neff`: An effective number of individuals. Calculated as $\sum_i (1-(1/2)^{min(d_i)})$ where $min(d_i)$ is the minimum read depth across both SNPs in the pair for individual $i$ 
 
 where each rows represents a LD estimate for a particular SNP pair.
 
