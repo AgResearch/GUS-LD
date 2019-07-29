@@ -151,7 +151,7 @@ GUSLD <- function(URobj, SNPpairs=NULL, indsubset=NULL, nClust=2, LDmeasure="r2"
     ## estimate the pairwise LD
     res <- foreach::foreach(snp1=1:nSnps,.combine=GUSbase:::comb_mat, .export=LDmeasure,
                    .multicombine=TRUE) %dopar% {
-      LDvec <- c(replicate(length(LDmeasure) + 1,numeric(nSnps),simplify=F))
+      LDvec <- c(replicate(length(LDmeasure) + 2,numeric(nSnps),simplify=F))
       for(snp2 in seq_len(snp1-1)){
         ind <- snps[c(snp1,snp2)]
         temp <- URobj$.__enclos_env__$private$pfreq[ind]
@@ -163,7 +163,9 @@ GUSLD <- function(URobj, SNPpairs=NULL, indsubset=NULL, nClust=2, LDmeasure="r2"
         alt_temp <- URobj$.__enclos_env__$private$alt[indsubset,ind]
         depth <- ref_temp + alt_temp
         N <- sum(apply(depth, 1, function(x) all(x > 0)))
+        Neff <- sum(1-(1/2)^(apply(depth[,1:2], 1, function(x) min(x))))
         LDvec[[length(LDmeasure) + 1]][snp2] <- N
+        LDvec[[length(LDmeasure) + 2]][snp2] <- Neff
         if(N > 2){
           MLE <- try(stats::optimize(f = ll_gusld, tol=1e-20,
                            lower=C1hat, upper=C2hat, p=c(pA1_hat,pA2_hat),
@@ -195,7 +197,7 @@ GUSLD <- function(URobj, SNPpairs=NULL, indsubset=NULL, nClust=2, LDmeasure="r2"
     ## format result to write to file
     # if(writeFile){
       indx <- which(upper.tri(res[[1]]), arr.ind=T)
-      out <- as.data.frame(matrix(nrow=nrow(indx), ncol=length(LDmeasure)+8))
+      out <- as.data.frame(matrix(nrow=nrow(indx), ncol=length(LDmeasure)+10))
       #out[,1:2] <- indx
       for(meas in 1:length(LDmeasure))
         out[meas] <- format(round(res[[meas]][indx],dp),scientific = FALSE,drop0trailing = TRUE)
@@ -206,8 +208,9 @@ GUSLD <- function(URobj, SNPpairs=NULL, indsubset=NULL, nClust=2, LDmeasure="r2"
           round(URobj$.__enclos_env__$private$pfreq[snps][indx],dp),
           round(URobj$.__enclos_env__$private$ep[snps][indx],dp)))
       out[length(LDmeasure) + 9] <- res[[length(LDmeasure) + 1]][indx]
+      out[length(LDmeasure) + 10] <- res[[length(LDmeasure) + 2]][indx]
       colnames(out) <- c(LDmeasure, "CHROM_SNP1","CHROM_SNP2","POS_SNP1","POS_SNP2",
-                         "FREQ_SNP1","FREQ_SNP2","ERR_SNP1","ERR_SNP2","N")
+                         "FREQ_SNP1","FREQ_SNP2","ERR_SNP1","ERR_SNP2","N","Neff")
       if(writeFile){
         data.table::fwrite(out, file = outfilename, quote=FALSE, nThread = nClust)
         cat("Name of LD results file:    \t",outfilename,"\n")
@@ -255,6 +258,7 @@ GUSLD <- function(URobj, SNPpairs=NULL, indsubset=NULL, nClust=2, LDmeasure="r2"
       alt_temp <- URobj$.__enclos_env__$private$alt[indsubset,ind]
       depth <- ref_temp + alt_temp
       N <- sum(apply(depth, 1, function(x) all(x > 0)))
+      Neff <- sum(1-(1/2)^(apply(depth[,1:2], 1, function(x) min(x))))
       if(N > 2){
         MLE <- try(stats::optimize(f = ll_gusld, tol=1e-20,
                            lower=C1hat, upper=C2hat, p=c(pA1_hat,pA2_hat),
@@ -276,11 +280,11 @@ GUSLD <- function(URobj, SNPpairs=NULL, indsubset=NULL, nClust=2, LDmeasure="r2"
           LDvec[meas] <- NA
         }
       }
-      return(c(LDvec,N))
+      return(c(LDvec,N,Neff))
     }
     #parallel::stopCluster(cl)
     res <- unname(res)
-    out <- as.data.frame(matrix(nrow=npairs, ncol=length(LDmeasure) + 9))
+    out <- as.data.frame(matrix(nrow=npairs, ncol=length(LDmeasure) + 10))
     out[1:length(LDmeasure)] <- format(round(res[,1:length(LDmeasure)],dp), scientific = FALSE,drop0trailing = TRUE)
     out[length(LDmeasure) + 1:4] <- c(URobj$.__enclos_env__$private$chrom[SNPpairs],
                                       URobj$.__enclos_env__$private$pos[SNPpairs])
@@ -289,8 +293,9 @@ GUSLD <- function(URobj, SNPpairs=NULL, indsubset=NULL, nClust=2, LDmeasure="r2"
       round(URobj$.__enclos_env__$private$ep[SNPpairs],dp)
     ),scientific = FALSE,drop0trailing = TRUE)
     out[length(LDmeasure) + 9] <- res[,length(LDmeasure) + 1]
+    out[length(LDmeasure) + 10] <- res[,length(LDmeasure) + 2]
     names(out) <- c(LDmeasure, "CHROM_SNP1","CHROM_SNP2","POS_SNP1","POS_SNP2",
-                    "FREQ_SNP1","FREQ_SNP2","ERR_SNP1","ERR_SNP2","N")
+                    "FREQ_SNP1","FREQ_SNP2","ERR_SNP1","ERR_SNP2","N","Neff")
     ## return the results
     if(writeFile)
       data.table::fwrite(out,file = outfilename, quote = FALSE, nThread = nClust)
