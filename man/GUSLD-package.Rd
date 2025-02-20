@@ -2,13 +2,21 @@
 % Please edit documentation in R/GUSLD-package.R
 \docType{package}
 \name{GUSLD-package}
+\alias{GUSLD-package}
 \title{Genotyping Uncertainty with Sequencing data - Linkage Disequilibrium (GUSLD)}
 \description{
 \tabular{ll}{ Package: \tab GUSLD\cr Type: \tab Package\cr Version: \tab
-1.0.0\cr Date: \tab 2018-10-26\cr License: \tab GPL 3\cr }
+1.0.2\cr Date: \tab 2025-02-20\cr License: \tab GPL 3\cr }
 }
 \references{
 \insertRef{bilton2018genetics2}{GUSbase}
+}
+\seealso{
+Useful links:
+\itemize{
+  \item \url{https://github.com/AgResearch/GUS-LD}
+}
+
 }
 \author{
 Timothy P. Bilton, Maintainer: Timothy P. Bilton

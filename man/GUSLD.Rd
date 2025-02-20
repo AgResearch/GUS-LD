@@ -4,8 +4,15 @@
 \alias{GUSLD}
 \title{Compute pairwise LD estimates using GUSLD}
 \usage{
-GUSLD(URobj, SNPpairs = NULL, indsubset = NULL, nClust = 2,
-  LDmeasure = "r2", filename = NULL, dp = 4)
+GUSLD(
+  URobj,
+  SNPpairs = NULL,
+  indsubset = NULL,
+  nClust = 2,
+  LDmeasure = "r2",
+  filename = NULL,
+  dp = 4
+)
 }
 \arguments{
 \item{URobj}{An object of class UR created by the \code{\link{makeUR}} function.}

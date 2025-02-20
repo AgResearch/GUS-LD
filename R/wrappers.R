@@ -1,6 +1,6 @@
 ##########################################################################
 # Genotyping Uncertainty with Sequencing data - Linkage Disequilibrium (GUSLD)
-# Copyright 2017-2018 AgResearch Ltd. <timothy.bilton@agresearch.co.nz>
+# Copyright 2017-2025 AgResearch Ltd. <timothy.bilton@agresearch.co.nz>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by

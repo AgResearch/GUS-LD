@@ -1,6 +1,6 @@
 ##########################################################################
 # Genotyping Uncertainty with Sequencing data - Linkage Disequilibrium (GUSLD)
-# Copyright 2017-2018 AgResearch Ltd. <timothy.bilton@agresearch.co.nz>
+# Copyright 2017-2025 AgResearch Ltd. <timothy.bilton@agresearch.co.nz>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -108,13 +108,13 @@ GUSLD <- function(URobj, SNPpairs=NULL, indsubset=NULL, nClust=2, LDmeasure="r2"
   ## do some checks
   if(!all(class(URobj) %in% c("UR","RA","R6")))
     stop("First argumented supplied is not of class 'UR', 'R6' and 'RA'")
-  if(!is.vector(LDmeasure) || !is.character(LDmeasure) || length(LDmeasure) == 0)
+  if(!is.vector(LDmeasure) | !is.character(LDmeasure) | length(LDmeasure) == 0)
     stop("Argument for which LD measures to use is invalid.")
-  if(!is.numeric(nClust) || length(nClust) != 1 || round(nClust) != nClust || nClust < 1)
+  if(!is.numeric(nClust) | length(nClust) != 1 | round(nClust) != nClust | nClust < 1)
     stop("Argument for the number of cores in the parallel processing is invalid. Should be a positive integer number")
   else{
     for(measure in LDmeasure){
-      if(!exists(measure) || !is.function(get(measure)))
+      if(!exists(measure) | !is.function(get(measure)))
         stop(paste("LD measure",measure,"is not defined"))
     }
   }
@@ -129,7 +129,7 @@ GUSLD <- function(URobj, SNPpairs=NULL, indsubset=NULL, nClust=2, LDmeasure="r2"
   ## Check if we write to filename
   writeFile = FALSE
   if(!is.null(filename)){
-    if(!is.vector(filename) || !is.character(filename) || length(filename) != 1)
+    if(!is.vector(filename) | !is.character(filename) | length(filename) != 1)
       stop("Specified file name is invalid")
     else {
       outfilename <- paste0(tail(strsplit(filename,split=.Platform$file.sep)[[1]],1),"_GUSLD.txt")
@@ -231,8 +231,8 @@ GUSLD <- function(URobj, SNPpairs=NULL, indsubset=NULL, nClust=2, LDmeasure="r2"
     }
   } else{ ## Case 2: SNP pairs specified
     ## check input for SNPpairs matrix
-    if(!is.numeric(SNPpairs) || !is.matrix(SNPpairs) || ncol(SNPpairs) != 2 || round(SNPpairs) != SNPpairs ||
-       min(SNPpairs) < 1 || max(SNPpairs) > URobj$.__enclos_env__$private$nSnps)
+    if(!is.numeric(SNPpairs) | !is.matrix(SNPpairs) | ncol(SNPpairs) != 2 | round(SNPpairs) != SNPpairs |
+       min(SNPpairs) < 1 | max(SNPpairs) > URobj$.__enclos_env__$private$nSnps)
       stop("Input for SNPpairs is invalid. Should a integer matix with 2 columns.")
     # check for duplicates
     SNPpairs <- unique(SNPpairs, MARGIN=1)
