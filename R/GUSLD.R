@@ -231,7 +231,7 @@ GUSLD <- function(URobj, SNPpairs=NULL, indsubset=NULL, nClust=2, LDmeasure="r2"
     }
   } else{ ## Case 2: SNP pairs specified
     ## check input for SNPpairs matrix
-    if(!is.numeric(SNPpairs) | !is.matrix(SNPpairs) | ncol(SNPpairs) != 2 | round(SNPpairs) != SNPpairs |
+    if(!is.numeric(SNPpairs) | !is.matrix(SNPpairs) | ncol(SNPpairs) != 2 | any(round(SNPpairs) != SNPpairs) |
        min(SNPpairs) < 1 | max(SNPpairs) > URobj$.__enclos_env__$private$nSnps)
       stop("Input for SNPpairs is invalid. Should a integer matix with 2 columns.")
     # check for duplicates
